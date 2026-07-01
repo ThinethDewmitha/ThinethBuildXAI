@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import Header from './components/Header';
+import AppChromeBackground from './components/AppChromeBackground';
 import ApiKeyModal from './components/ApiKeyModal';
 import PhotoUpload from './components/PhotoUpload';
 import SpecForm from './components/SpecForm';
@@ -272,6 +273,7 @@ export default function App() {
   if (showAdmin && user?.isAdmin) {
     return (
       <>
+        <AppChromeBackground />
         <Header
           user={user}
           onLogout={handleLogout}
@@ -290,6 +292,7 @@ export default function App() {
   if (showAuth) {
     return (
       <>
+        <AppChromeBackground />
         <Header
           user={user}
           onLogout={handleLogout}
@@ -306,6 +309,7 @@ export default function App() {
 
   return (
     <>
+      <AppChromeBackground />
       <Header
         user={user}
         onLogout={handleLogout}

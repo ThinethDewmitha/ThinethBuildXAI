@@ -224,7 +224,7 @@ h3 { font-size: 1.25rem; }
 
 /* ═══ CARDS ══════════════════════════════════════════════════════════════ */
 .glass-card {
-  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-subtle);
@@ -728,11 +728,52 @@ h3 { font-size: 1.25rem; }
 
 .nav-drawer-logout { width: 100%; justify-content: center; }
 
+body.app-chrome-active::before {
+  opacity: 0;
+}
+
+body.app-chrome-active .header {
+  background: color-mix(in srgb, var(--header-bg) 86%, transparent);
+}
+
+.app-chrome-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.app-chrome-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, color-mix(in srgb, var(--bg-primary) 45%, transparent), transparent 55%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-primary) 58%, transparent) 0%,
+      color-mix(in srgb, var(--bg-primary) 72%, transparent) 45%,
+      color-mix(in srgb, var(--bg-primary) 80%, transparent) 100%
+    );
+}
+
+[data-theme='light'] .app-chrome-bg-overlay {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, color-mix(in srgb, var(--bg-primary) 55%, transparent), transparent 55%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg-primary) 68%, transparent) 0%,
+      color-mix(in srgb, var(--bg-primary) 78%, transparent) 50%,
+      color-mix(in srgb, var(--bg-primary) 85%, transparent) 100%
+    );
+}
+
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .header-actions {
@@ -930,6 +971,7 @@ h3 { font-size: 1.25rem; }
   grid-template-columns: 1.05fr 0.95fr;
   gap: 56px;
   align-items: center;
+  padding: 8px 0 0;
 }
 
 .welcome-hero-copy { text-align: left; }
