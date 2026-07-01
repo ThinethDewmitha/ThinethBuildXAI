@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
 import Header from './components/Header';
 import AppChromeBackground from './components/AppChromeBackground';
 import ApiKeyModal from './components/ApiKeyModal';
 import PhotoUpload from './components/PhotoUpload';
 import SpecForm from './components/SpecForm';
 import AnalysisLoader from './components/AnalysisLoader';
-import BlueprintView from './components/BlueprintView';
 import SpecValidator from './components/SpecValidator';
 import Auth from './components/Auth';
-import AdminDashboard from './components/AdminDashboard';
 import { initializeAI, analyzeSite, generateBlueprintImage, refineBlueprint, validateSpecs as aiValidateSpecs } from './services/ai';
 import { convertUnits, generateFullEstimate } from './services/calculator';
 import { getStoredUser, getStoredToken, logout as apiLogout, syncFirebaseSession } from './services/api';
@@ -17,8 +15,21 @@ import { getFirebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
 import Welcome from './components/Welcome';
-import ProjectHistory from './components/ProjectHistory';
 import { hasAllRequiredPhotos } from './constants/photos';
+import { loadStoredApiKeys } from './utils/apiKeyStorage';
+
+const BlueprintView = React.lazy(() => import('./components/BlueprintView'));
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard'));
+const ProjectHistory = React.lazy(() => import('./components/ProjectHistory'));
+
+function PageLoader() {
+  return (
+    <div className="page-loader" role="status" aria-live="polite">
+      <Loader2 size={28} className="spin" />
+      <span>Loading…</span>
+    </div>
+  );
+}
 
 
 const PHASES = {
@@ -33,8 +44,8 @@ const PHASES = {
 
 export default function App() {
   const [phase, setPhase] = useState(PHASES.WELCOME);
-  const [apiKey, setApiKey] = useState(null);
-  const [groqApiKey, setGroqApiKey] = useState(null);
+  const [apiKey, setApiKey] = useState(() => loadStoredApiKeys().geminiKey);
+  const [groqApiKey, setGroqApiKey] = useState(() => loadStoredApiKeys().groqKey);
   const [showApiModal, setShowApiModal] = useState(false);
   const [photos, setPhotos] = useState({});
 
@@ -46,34 +57,18 @@ export default function App() {
   const [siteLocation, setSiteLocation] = useState(null);
 
   // Auth state
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const storedUser = getStoredUser();
+    return storedUser && getStoredToken() ? storedUser : null;
+  });
   const [showAuth, setShowAuth] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showProjects, setShowProjects] = useState(false);
 
-  // Load stored API key and restore auth session
+  // Initialize AI + restore Firebase auth session
   useEffect(() => {
-    const storedKey = localStorage.getItem('buildx_api_key');
-    const storedGroqKey = localStorage.getItem('buildx_groq_api_key');
-    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const envGroqKey = import.meta.env.VITE_GROQ_API_KEY;
-    const key = storedKey || envKey;
-    const groqKey = storedGroqKey || envGroqKey;
-    if (key) {
-      if (!storedKey && envKey) localStorage.setItem('buildx_api_key', envKey);
-      setApiKey(key);
-    }
-    if (groqKey) {
-      if (!storedGroqKey && envGroqKey) localStorage.setItem('buildx_groq_api_key', envGroqKey);
-      setGroqApiKey(groqKey);
-    }
-    if (key || groqKey) {
-      initializeAI({ geminiKey: key, groqKey });
-    }
-
-    const storedUser = getStoredUser();
-    if (storedUser && getStoredToken()) {
-      setUser(storedUser);
+    if (apiKey || groqApiKey) {
+      initializeAI({ geminiKey: apiKey, groqKey: groqApiKey });
     }
 
     const auth = getFirebaseAuth();
@@ -99,7 +94,7 @@ export default function App() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [apiKey, groqApiKey]);
 
   const handleGoHome = () => {
     setShowAuth(false);
@@ -228,7 +223,7 @@ export default function App() {
 
       generateBlueprintImage(specs, refinedData)
         .then(img => { if (img) setBlueprintImage(img); })
-        .catch(err => console.warn('Refined image generation failed'));
+        .catch(() => console.warn('Refined image generation failed'));
 
       return refinedData;
     } catch (err) {
@@ -290,7 +285,9 @@ export default function App() {
           onGetStarted={handleGetStartedNav}
           onMyProjects={handleMyProjects}
         />
-        <AdminDashboard onBack={() => setShowAdmin(false)} />
+        <Suspense fallback={<PageLoader />}>
+          <AdminDashboard onBack={() => setShowAdmin(false)} />
+        </Suspense>
       </>
     );
   }
@@ -340,10 +337,12 @@ export default function App() {
       )}
 
       {showProjects && user && (
-        <ProjectHistory
-          onBack={() => setShowProjects(false)}
-          onOpenProject={handleOpenProject}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <ProjectHistory
+            onBack={() => setShowProjects(false)}
+            onOpenProject={handleOpenProject}
+          />
+        </Suspense>
       )}
 
       {phase === PHASES.MAP_SELECT && (
@@ -434,18 +433,20 @@ export default function App() {
       {phase === PHASES.ANALYZING && <AnalysisLoader dualAi={Boolean(groqApiKey)} />}
 
       {phase === PHASES.RESULTS && (
-        <BlueprintView
-          analysis={analysis}
-          estimate={estimate}
-          specs={specs}
-          blueprintImage={blueprintImage}
-          siteLocation={siteLocation}
-          photos={photos}
-          user={user}
-          onRequestLogin={() => setShowAuth(true)}
-          onNewProject={handleNewProject}
-          onRefine={handleRefine}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <BlueprintView
+            analysis={analysis}
+            estimate={estimate}
+            specs={specs}
+            blueprintImage={blueprintImage}
+            siteLocation={siteLocation}
+            photos={photos}
+            user={user}
+            onRequestLogin={() => setShowAuth(true)}
+            onNewProject={handleNewProject}
+            onRefine={handleRefine}
+          />
+        </Suspense>
       )}
       </main>
     </>

@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'dev-dist', 'public/sw.js', 'public/workbox-*.js']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -24,6 +24,12 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+    },
+  },
+  {
+    files: ['server/**/*.{js,mjs}', 'api/**/*.{js,mjs}', 'config/**/*.{js,mjs}', 'scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: globals.node,
     },
   },
 ])

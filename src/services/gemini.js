@@ -407,10 +407,25 @@ CRITICAL JSON RULES (MUST FOLLOW OR SYSTEM WILL CRASH):
   console.log('AI response length:', text.length, 'chars. First 200:', text.substring(0, 200));
 
   // Helper: sanitize control characters inside JSON strings that break JSON.parse
+  function stripControlChars(str) {
+    let out = '';
+    for (let i = 0; i < str.length; i += 1) {
+      const code = str.charCodeAt(i);
+      if (code === 0x09 || code === 0x0a || code === 0x0d) {
+        out += str[i];
+        continue;
+      }
+      if (code < 0x20 || code === 0x7f) {
+        out += ' ';
+        continue;
+      }
+      out += str[i];
+    }
+    return out;
+  }
+
   function sanitizeJsonString(str) {
-    return str
-      // Replace literal control chars (except \n which we keep for structure) with spaces
-      .replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, ' ')
+    return stripControlChars(str)
       // Fix unescaped newlines/tabs inside JSON strings: replace actual tab/CR with escape sequences
       .replace(/\t/g, '\\t')
       .replace(/\r/g, '');
@@ -421,7 +436,7 @@ CRITICAL JSON RULES (MUST FOLLOW OR SYSTEM WILL CRASH):
     // Strategy 1: Try direct parse after stripping markdown fences
     const cleaned = sanitizeJsonString(text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
     parsed = JSON.parse(cleaned);
-  } catch (e1) {
+  } catch {
     try {
       // Strategy 2: Extract JSON from within markdown code block
       const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
@@ -437,7 +452,7 @@ CRITICAL JSON RULES (MUST FOLLOW OR SYSTEM WILL CRASH):
           throw new Error('No JSON found');
         }
       }
-    } catch (e2) {
+    } catch {
       // Strategy 4: Repair truncated JSON (output was cut off before completion)
       try {
         let candidate = sanitizeJsonString(text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim());
@@ -471,7 +486,7 @@ CRITICAL JSON RULES (MUST FOLLOW OR SYSTEM WILL CRASH):
 
         parsed = JSON.parse(candidate);
         console.warn('⚠️ AI response was truncated — repaired JSON successfully (some data may be incomplete).');
-      } catch (e3) {
+      } catch {
         // Strategy 5: Aggressively sanitize — fix unescaped newlines inside string values,
         // remove all non-printable chars, and try repair again
         try {
@@ -522,7 +537,7 @@ CRITICAL JSON RULES (MUST FOLLOW OR SYSTEM WILL CRASH):
 
           parsed = JSON.parse(candidate);
           console.warn('⚠️ AI response required aggressive sanitization — parsed successfully (some data may be incomplete).');
-        } catch (e4) {
+        } catch {
           console.error('Failed to parse Gemini response (all 5 strategies failed).');
           console.error('Response length:', text.length);
           console.error('First 500 chars:', text.substring(0, 500));
@@ -630,7 +645,7 @@ Return the FULL updated JSON object with the same structure as before.`;
   try {
     const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     return JSON.parse(cleaned);
-  } catch (e1) {
+  } catch {
     try {
       const codeBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?\s*```/);
       if (codeBlockMatch) {
@@ -642,7 +657,7 @@ Return the FULL updated JSON object with the same structure as before.`;
         return JSON.parse(text.substring(firstBrace, lastBrace + 1));
       }
       throw new Error('No JSON found');
-    } catch (e2) {
+    } catch {
       // Strategy 4: Repair truncated JSON
       try {
         let candidate = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -670,7 +685,7 @@ Return the FULL updated JSON object with the same structure as before.`;
         const repaired = JSON.parse(candidate);
         console.warn('⚠️ Refinement response was truncated — repaired JSON successfully.');
         return repaired;
-      } catch (e3) {
+      } catch {
         console.error('Failed to parse refinement (all 4 strategies failed):', text.substring(0, 500));
         throw new Error('Could not refine blueprint. Please try again.');
       }
@@ -683,7 +698,7 @@ Return the FULL updated JSON object with the same structure as before.`;
  * AI validation removed to preserve quota for the actual analysis.
  * Returns an array of missing items or empty array if all is good.
  */
-export async function validateSpecs(specs, photos) {
+export async function validateSpecs() {
   // Skip AI validation entirely to conserve API quota.
   // Local validation in SpecValidator component handles this.
   console.log('ℹ️ Spec validation using local checks only (quota-saving mode).');

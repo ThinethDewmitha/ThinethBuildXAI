@@ -1,5 +1,6 @@
 /**
  * Push local env + Firebase service account to Vercel (production).
+ * Does NOT push VITE_GEMINI_API_KEY / VITE_GROQ_API_KEY (users enter keys in the app).
  * Usage: node scripts/push-vercel-env.mjs
  */
 import { readFileSync, existsSync } from 'fs';
@@ -10,18 +11,33 @@ import { join } from 'path';
 const ROOT = new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
 const SCOPE = process.env.VERCEL_SCOPE || 'thinas-projects-e5191ff6';
 const TARGET = 'production';
+const PRODUCTION_ORIGIN = 'https://thineth-buildx-ai.vercel.app';
 
-function addEnv(name, value) {
+function runVercel(args, input) {
     const result = spawnSync(
         'npx',
-        ['vercel', 'env', 'add', name, TARGET, '--scope', SCOPE, '--yes', '--force'],
-        { input: String(value), encoding: 'utf8', shell: true, cwd: ROOT },
+        ['vercel', ...args, '--scope', SCOPE, '--yes'],
+        { input, encoding: 'utf8', shell: true, cwd: ROOT },
     );
+    return result;
+}
+
+function addEnv(name, value) {
+    const result = runVercel(['env', 'add', name, TARGET, '--force'], String(value));
     if (result.status !== 0) {
         console.error(`Failed ${name}:`, result.stderr || result.stdout);
         process.exitCode = 1;
     } else {
         console.log(`✓ ${name}`);
+    }
+}
+
+function removeEnv(name) {
+    const result = runVercel(['env', 'rm', name, TARGET]);
+    if (result.status !== 0) {
+        console.warn(`Could not remove ${name} (may not exist)`);
+    } else {
+        console.log(`✗ removed ${name}`);
     }
 }
 
@@ -44,7 +60,7 @@ function parseEnvFile(path) {
 }
 
 const local = parseEnvFile(join(ROOT, '.env.local'));
-const jwtSecret = randomBytes(32).toString('hex');
+const jwtSecret = local.JWT_SECRET || randomBytes(32).toString('hex');
 
 const firebaseFile = local.FIREBASE_SERVICE_ACCOUNT_FILE
     || 'gen-lang-client-09459610-efabb-firebase-adminsdk-fbsvc-216b245e81.json';
@@ -57,12 +73,28 @@ if (!existsSync(firebasePath)) {
 
 const serviceAccountJson = readFileSync(firebasePath, 'utf8').trim();
 
+const requiredFirebase = [
+    'VITE_FIREBASE_API_KEY',
+    'VITE_FIREBASE_AUTH_DOMAIN',
+    'VITE_FIREBASE_PROJECT_ID',
+    'VITE_FIREBASE_STORAGE_BUCKET',
+    'VITE_FIREBASE_MESSAGING_SENDER_ID',
+    'VITE_FIREBASE_APP_ID',
+];
+const missingFirebase = requiredFirebase.filter((k) => !local[k]);
+if (missingFirebase.length) {
+    console.error('Missing Firebase keys in .env.local:', missingFirebase.join(', '));
+    console.error('Run: npm run setup:firebase');
+    process.exit(1);
+}
+
 const vars = {
     JWT_SECRET: jwtSecret,
     ADMIN_EMAIL: local.ADMIN_EMAIL || 'thinethdewmitha123@gmail.com',
     ADMIN_SECRET: local.ADMIN_SECRET,
     FIREBASE_PROJECT_ID: local.FIREBASE_PROJECT_ID || local.VITE_FIREBASE_PROJECT_ID,
     FIREBASE_SERVICE_ACCOUNT_JSON: serviceAccountJson,
+    CORS_ORIGINS: local.CORS_ORIGINS || PRODUCTION_ORIGIN,
     VITE_API_URL: '/api',
     VITE_FIREBASE_API_KEY: local.VITE_FIREBASE_API_KEY,
     VITE_FIREBASE_AUTH_DOMAIN: local.VITE_FIREBASE_AUTH_DOMAIN,
@@ -72,11 +104,15 @@ const vars = {
     VITE_FIREBASE_APP_ID: local.VITE_FIREBASE_APP_ID,
 };
 
-if (local.VITE_GEMINI_API_KEY) {
-    vars.VITE_GEMINI_API_KEY = local.VITE_GEMINI_API_KEY;
+if (local.TURSO_DATABASE_URL && local.TURSO_AUTH_TOKEN) {
+    vars.TURSO_DATABASE_URL = local.TURSO_DATABASE_URL;
+    vars.TURSO_AUTH_TOKEN = local.TURSO_AUTH_TOKEN;
 }
 
 console.log(`Pushing ${Object.keys(vars).length} variables to Vercel (${TARGET})...\n`);
+console.log('Removing exposed AI keys from Vercel (users enter keys in-app)...\n');
+removeEnv('VITE_GEMINI_API_KEY');
+removeEnv('VITE_GROQ_API_KEY');
 
 for (const [key, value] of Object.entries(vars)) {
     if (!value) {

@@ -19,7 +19,8 @@ const optional = [
   'TURSO_DATABASE_URL + TURSO_AUTH_TOKEN (recommended — persistent DB on Vercel)',
   'VITE_API_URL (/api when frontend + API share one Vercel domain)',
   'CORS_ORIGINS (only if API is on a different host)',
-  'VITE_GEMINI_API_KEY (optional — users can enter key in app)',
+  'VITE_GEMINI_API_KEY (dev only in .env.local — never on Vercel; users enter in app)',
+  'VITE_GROQ_API_KEY (dev only in .env.local — never on Vercel)',
 ];
 
 console.log('Required Vercel environment variables:\n');

@@ -125,6 +125,17 @@ const upload = multer({
     },
 });
 
+function isFirebaseIdToken(token) {
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+        return typeof payload.iss === 'string' && payload.iss.includes('securetoken.google.com');
+    } catch {
+        return false;
+    }
+}
+
 function authMiddleware(req, res, next) {
     const token = req.headers.authorization?.replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'Authentication required' });
@@ -155,6 +166,9 @@ function authMiddleware(req, res, next) {
                     }
                     return finishWithUser(user);
                 } catch {
+                    if (isFirebaseIdToken(token)) {
+                        return res.status(401).json({ error: 'Invalid or expired token' });
+                    }
                     try {
                         const decoded = jwt.verify(token, JWT_SECRET);
                         return finishWithUser(await getUserById(decoded.userId));
