@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CheckCircle2, AlertTriangle, Loader2, Zap } from 'lucide-react';
+import { hasAllRequiredPhotos } from '../constants/photos';
 
 /**
  * Context-aware questions per building type when details are insufficient
@@ -55,8 +56,8 @@ export default function SpecValidator({ specs, photos, onProceed, onBack, onCanc
             // Local validation first
             const localIssues = [];
 
-            if (!photos || Object.keys(photos).length < 4) {
-                localIssues.push({ id: 'photos', label: 'Site Photos', message: 'All 4 photos are required (Front, Left, Right, Ground close-up).', critical: true });
+            if (!photos || !hasAllRequiredPhotos(photos)) {
+                localIssues.push({ id: 'photos', label: 'Site Photos', message: 'All 4 required photos are needed (Front, Left, Right, Ground close-up). Drone view is optional.', critical: true });
             }
             if (!specs.description || specs.description.length < 20) {
                 localIssues.push({ id: 'description', label: 'Building Description', message: 'Please describe the building purpose and type in detail (at least 20 characters).', critical: true, inputType: 'text', placeholder: 'Describe your building...' });

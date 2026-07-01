@@ -426,7 +426,7 @@ app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
     }
 });
 
-app.post('/api/projects/upload-photos', authMiddleware, upload.array('photos', 4), (req, res) => {
+app.post('/api/projects/upload-photos', authMiddleware, upload.array('photos', 5), (req, res) => {
     try {
         const photosMeta = req.files.map(f => ({
             filename: f.filename,

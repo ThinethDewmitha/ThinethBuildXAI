@@ -89,11 +89,29 @@ function GroundSketch() {
   );
 }
 
+function DroneSketch() {
+  return (
+    <svg {...sketchProps}>
+      <rect x="28" y="24" width="104" height="56" rx="2" className="photo-sketch-plot" />
+      <rect x="62" y="42" width="36" height="24" className="photo-sketch-building" rx="1" />
+      <path d="M20 72 L140 72" className="photo-sketch-road" />
+      <rect x="12" y="68" width="148" height="6" className="photo-sketch-road" rx="1" />
+      <path d="M80 12 L80 22 M75 17 L80 12 L85 17" className="photo-sketch-line" />
+      <text x="80" y="10" className="photo-sketch-label" textAnchor="middle">N</text>
+      <path d="M56 8 L80 18 L104 8" className="photo-sketch-drone" />
+      <circle cx="80" cy="6" r="2.5" className="photo-sketch-camera" />
+      <path d="M80 10 L28 24 M80 10 L132 24 M80 10 L80 24" className="photo-sketch-sight" />
+      <text x="80" y="54" className="photo-sketch-label" textAnchor="middle">Top-down</text>
+    </svg>
+  );
+}
+
 const SKETCH_BY_ID = {
   front: FrontSketch,
   left: LeftSideSketch,
   right: RightSideSketch,
   ground: GroundSketch,
+  drone: DroneSketch,
 };
 
 export default function PhotoSketchDiagram({ slotId }) {

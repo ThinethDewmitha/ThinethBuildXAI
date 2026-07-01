@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
 import {
-  Home, ArrowLeft, ArrowRight, Sprout, Camera, X, Check, XCircle,
+  Home, ArrowLeft, ArrowRight, Sprout, Plane, Camera, X, Check, XCircle,
   Trash2, RefreshCw, Image, Lightbulb, CheckCircle2,
 } from 'lucide-react';
 import PhotoSketchDiagram from './PhotoSketchDiagram';
+import {
+  REQUIRED_PHOTO_IDS, countRequiredPhotos,
+} from '../constants/photos';
 
 const PHOTO_SLOTS = [
   {
@@ -38,7 +41,19 @@ const PHOTO_SLOTS = [
     guide: 'Crouch down and take a close photo of the ground surface. This helps the AI determine soil type and texture.',
     tips: ['Get within 2-3 feet of the ground', 'Show soil color and texture', 'Include any visible cracks or stones', 'Add a coin/pen for scale reference'],
   },
+  {
+    id: 'drone',
+    label: 'Drone View',
+    Icon: Plane,
+    optional: true,
+    description: 'Aerial top-down photo',
+    guide: 'Capture a high-altitude top-down view of the entire site. Ensure all boundaries and surrounding access roads are visible.',
+    tips: ['Maintain 90° downward angle', 'Capture in clear weather', 'Include neighboring plot context'],
+  },
 ];
+
+const REQUIRED_SLOTS = PHOTO_SLOTS.filter((slot) => !slot.optional);
+const OPTIONAL_SLOTS = PHOTO_SLOTS.filter((slot) => slot.optional);
 
 export default function PhotoUpload({ onPhotosUpdate, photos = {} }) {
   const fileInputRef = useRef(null);
@@ -93,7 +108,55 @@ export default function PhotoUpload({ onPhotosUpdate, photos = {} }) {
     onPhotosUpdate(updatedPhotos);
   };
 
-  const uploadedCount = Object.keys(photos).length;
+  const uploadedCount = countRequiredPhotos(photos);
+  const hasDrone = Boolean(photos.drone);
+  const requiredTotal = REQUIRED_PHOTO_IDS.length;
+
+  const renderSlot = (slot) => (
+    <div
+      key={slot.id}
+      className={`photo-slot glass-card ${previews[slot.id] ? 'has-image' : ''} ${slot.optional ? 'photo-slot--optional' : ''}`}
+      onClick={() => !previews[slot.id] && handleSlotClick(slot.id)}
+    >
+      {previews[slot.id] ? (
+        <>
+          <img src={previews[slot.id]} alt={slot.label} className="slot-preview" />
+          <div className="slot-overlay">
+            <button type="button" className="btn-icon" onClick={(e) => handleRemovePhoto(slot.id, e)} aria-label="Remove photo">
+              <Trash2 size={16} />
+            </button>
+            <button type="button" className="btn-icon" onClick={() => handleSlotClick(slot.id)} aria-label="Replace photo">
+              <RefreshCw size={16} />
+            </button>
+          </div>
+          <div className="slot-done-badge"><Check size={14} /></div>
+        </>
+      ) : (
+        <div className="slot-empty">
+          <div className="slot-icon"><slot.Icon size={24} /></div>
+          <div className="slot-label-row">
+            <div className="slot-label">{slot.label}</div>
+            {slot.optional && <span className="slot-optional-badge">Optional</span>}
+          </div>
+          <PhotoSketchDiagram slotId={slot.id} />
+          <div className="slot-guide">{slot.guide}</div>
+          <div className="slot-tips">
+            {slot.tips.map((tip, i) => (
+              <span key={i} className="slot-tip-tag"><Lightbulb size={12} /> {tip}</span>
+            ))}
+          </div>
+          <div className="slot-actions">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}>
+              <Image size={14} /> Gallery
+            </button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleCameraClick(slot.id); }}>
+              <Camera size={14} /> Camera
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="photo-upload-container animate-in">
@@ -131,62 +194,33 @@ export default function PhotoUpload({ onPhotosUpdate, photos = {} }) {
             <div className="guide-tip guide-tip--good"><CheckCircle2 size={14} /> Include <strong>full width</strong> of the plot</div>
             <div className="guide-tip guide-tip--good"><CheckCircle2 size={14} /> Show the <strong>ground surface</strong> clearly</div>
             <div className="guide-tip guide-tip--bad"><XCircle size={14} /> Don&apos;t use <strong>zoomed-in</strong> photos</div>
-            <div className="guide-tip guide-tip--bad"><XCircle size={14} /> Don&apos;t use <strong>filtered</strong> or edited photos</div>
+            <div className="guide-tip guide-tip--good"><CheckCircle2 size={14} /> <strong>Drone view</strong> optional for full plot context</div>
           </div>
         </div>
       )}
 
       <div className="upload-progress">
         <div className="upload-progress-bar">
-          <div className="upload-progress-fill" style={{ width: `${(uploadedCount / 4) * 100}%` }} />
+          <div className="upload-progress-fill" style={{ width: `${(uploadedCount / requiredTotal) * 100}%` }} />
         </div>
-        <span className="upload-progress-text">{uploadedCount} of 4 photos uploaded</span>
+        <span className="upload-progress-text">
+          {uploadedCount} of {requiredTotal} required photos
+          {hasDrone ? ' · Drone view added' : ''}
+        </span>
       </div>
 
       <div className="upload-grid">
-        {PHOTO_SLOTS.map((slot) => (
-          <div
-            key={slot.id}
-            className={`photo-slot glass-card ${previews[slot.id] ? 'has-image' : ''}`}
-            onClick={() => !previews[slot.id] && handleSlotClick(slot.id)}
-          >
-            {previews[slot.id] ? (
-              <>
-                <img src={previews[slot.id]} alt={slot.label} className="slot-preview" />
-                <div className="slot-overlay">
-                  <button type="button" className="btn-icon" onClick={(e) => handleRemovePhoto(slot.id, e)} aria-label="Remove photo">
-                    <Trash2 size={16} />
-                  </button>
-                  <button type="button" className="btn-icon" onClick={() => handleSlotClick(slot.id)} aria-label="Replace photo">
-                    <RefreshCw size={16} />
-                  </button>
-                </div>
-                <div className="slot-done-badge"><Check size={14} /></div>
-              </>
-            ) : (
-              <div className="slot-empty">
-                <div className="slot-icon"><slot.Icon size={24} /></div>
-                <div className="slot-label">{slot.label}</div>
-                <PhotoSketchDiagram slotId={slot.id} />
-                <div className="slot-guide">{slot.guide}</div>
-                <div className="slot-tips">
-                  {slot.tips.map((tip, i) => (
-                    <span key={i} className="slot-tip-tag"><Lightbulb size={12} /> {tip}</span>
-                  ))}
-                </div>
-                <div className="slot-actions">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleSlotClick(slot.id); }}>
-                    <Image size={14} /> Gallery
-                  </button>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => { e.stopPropagation(); handleCameraClick(slot.id); }}>
-                    <Camera size={14} /> Camera
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+        {REQUIRED_SLOTS.map(renderSlot)}
       </div>
+
+      {OPTIONAL_SLOTS.length > 0 && (
+        <div className="upload-optional-section">
+          <p className="upload-optional-heading">Optional — improves site context</p>
+          <div className="upload-grid upload-grid--optional">
+            {OPTIONAL_SLOTS.map(renderSlot)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

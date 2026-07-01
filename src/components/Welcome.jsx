@@ -52,7 +52,7 @@ const STEPS = [
     icon: Camera,
     label: 'Upload Photos',
     num: '02',
-    detail: '4 photos — 3 sides of the plot plus a ground close-up.',
+    detail: '4 required photos — 3 sides plus ground close-up. Drone view optional.',
   },
   {
     icon: Ruler,

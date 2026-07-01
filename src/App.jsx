@@ -17,6 +17,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
 import Welcome from './components/Welcome';
 import ProjectHistory from './components/ProjectHistory';
+import { hasAllRequiredPhotos } from './constants/photos';
 
 
 const PHASES = {
@@ -326,7 +327,7 @@ export default function App() {
       )}
 
       {(phase === PHASES.UPLOAD || phase === PHASES.SPECS) && (
-        <div className="wizard-container">
+        <div className={`wizard-container${phase === PHASES.UPLOAD ? ' wizard-container--wide' : ''}`}>
           <div className="wizard-header">
             <div className="wizard-step-indicator">
               <div className={`step-dot ${getCurrentStepNum() >= 1 ? 'active' : ''} ${getCurrentStepNum() > 1 ? 'completed' : ''}`}>1</div>
@@ -342,7 +343,7 @@ export default function App() {
             </h2>
             <p className="wizard-desc">
               {phase === PHASES.UPLOAD
-                ? 'Take photos from 3 sides and a close-up of the ground, then upload all 4.'
+                ? 'Take photos from 3 sides and a close-up of the ground (drone view optional).'
                 : 'Tell us the size and type of building you want to construct.'}
             </p>
           </div>
@@ -373,7 +374,7 @@ export default function App() {
           {phase === PHASES.UPLOAD && (
             <>
               <PhotoUpload onPhotosUpdate={handlePhotosUpdate} photos={photos} />
-              {Object.keys(photos).length === 4 && (
+              {hasAllRequiredPhotos(photos) && (
                 <div className="wizard-continue-wrap">
                   <button className="btn btn-primary btn-large btn-block-mobile" onClick={() => setPhase(PHASES.SPECS)}>
                     Continue → Enter Specs

@@ -4,6 +4,7 @@
  * Features automatic model fallback and retry on rate limits.
  */
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { PHOTO_LABELS } from '../constants/photos';
 
 let genAI = null;
 
@@ -191,24 +192,23 @@ async function callWithFallback(callFn, maxRetries = 3) {
   );
 }
 
-/**
- * Analyze construction site photos and generate a comprehensive engineering report
- */
 export async function analyzeSite(imageFiles, specs, siteLocation = null) {
   if (!genAI) throw new Error('Gemini not initialized. Please set your API key.');
 
-  // Convert all images to base64
-  const imageParts = await Promise.all(
-    Object.entries(imageFiles).map(async ([side, file]) => {
-      const base64 = await fileToBase64(file);
-      return {
-        inlineData: {
-          mimeType: file.type,
-          data: base64,
-        },
-      };
-    })
-  );
+  // Convert all images to base64 with labels
+  const imageParts = [];
+  for (const [side, file] of Object.entries(imageFiles)) {
+    const base64 = await fileToBase64(file);
+    imageParts.push({ text: `[${PHOTO_LABELS[side] || side}]` });
+    imageParts.push({
+      inlineData: {
+        mimeType: file.type,
+        data: base64,
+      },
+    });
+  }
+
+  const hasDronePhoto = Boolean(imageFiles.drone);
 
   // Build location context if available
   let locationContext = '';
@@ -249,7 +249,8 @@ Use this location to determine:
   }
 
   const prompt = `You are a Senior Structural Engineer and Project Manager. 
-Analyze the provided construction site photos (Front, Sides, and Ground close-up) and user specifications to generate a MASSIVE, HIGHLY DETAILED, and 100% ACCURATE engineering report.
+Analyze the provided construction site photos (Front, Sides, Ground close-up${hasDronePhoto ? ', and optional Drone aerial top-down view' : ''}) and user specifications to generate a MASSIVE, HIGHLY DETAILED, and 100% ACCURATE engineering report.
+${hasDronePhoto ? 'Use the drone aerial photo to assess overall plot shape, boundaries, access roads, and neighboring context.\n' : ''}
 ${locationContext}${buildingTypeContext}
 **Building Specifications:**
 - Building Type: ${buildingType.replace(/_/g, ' ')}
