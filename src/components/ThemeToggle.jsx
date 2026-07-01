@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export default function ThemeToggle() {
@@ -15,7 +16,7 @@ export default function ThemeToggle() {
     >
       <span className={`theme-toggle-track ${isDark ? 'is-dark' : 'is-light'}`}>
         <span className="theme-toggle-thumb">
-          {isDark ? '🌙' : '☀️'}
+          {isDark ? <Moon size={13} /> : <Sun size={13} />}
         </span>
       </span>
     </button>

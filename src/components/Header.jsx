@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Home, Rocket, Settings, User, LogOut, X, Menu,
+} from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 function MenuIcon({ open }) {
-  return (
-    <span className={`hamburger ${open ? 'is-open' : ''}`} aria-hidden="true">
-      <span />
-      <span />
-      <span />
-    </span>
-  );
+  return open ? <X size={20} /> : <Menu size={20} />;
 }
 
 export default function Header({
@@ -56,7 +53,10 @@ export default function Header({
       {user.isAdmin && (
         <button type="button" className="btn-text btn-admin" onClick={onAdminPanel}>Admin</button>
       )}
-      <button type="button" className="btn-text btn-logout" onClick={onLogout}>Logout</button>
+      <button type="button" className="btn-text btn-logout" onClick={onLogout}>
+        <LogOut size={14} />
+        Logout
+      </button>
     </div>
   ) : (
     <button type="button" className="btn btn-secondary btn-header-login" onClick={onLoginClick}>
@@ -67,22 +67,22 @@ export default function Header({
   const drawerLinks = (
     <nav className="nav-drawer-links" aria-label="Mobile navigation">
       <button type="button" className="nav-drawer-link" onClick={handleNav(onHomeClick)}>
-        <span className="nav-drawer-icon">🏠</span>
+        <Home size={18} className="nav-drawer-icon" />
         <span>Home</span>
       </button>
       <button type="button" className="nav-drawer-link nav-drawer-link--accent" onClick={handleNav(onGetStarted)}>
-        <span className="nav-drawer-icon">🚀</span>
+        <Rocket size={18} className="nav-drawer-icon" />
         <span>Get Started</span>
       </button>
       {user?.isAdmin && (
         <button type="button" className="nav-drawer-link" onClick={handleNav(onAdminPanel)}>
-          <span className="nav-drawer-icon">⚙️</span>
+          <Settings size={18} className="nav-drawer-icon" />
           <span>Admin Panel</span>
         </button>
       )}
       {!user && (
         <button type="button" className="nav-drawer-link" onClick={handleNav(onLoginClick)}>
-          <span className="nav-drawer-icon">👤</span>
+          <User size={18} className="nav-drawer-icon" />
           <span>Sign In</span>
         </button>
       )}
@@ -93,7 +93,6 @@ export default function Header({
     <>
       <header className="header">
         <div className="header-inner">
-          {/* Mobile: hamburger on the left */}
           <div className="header-actions header-actions-mobile">
             <button
               type="button"
@@ -122,7 +121,6 @@ export default function Header({
             </div>
           </button>
 
-          {/* Desktop navigation */}
           <nav className="header-nav-desktop" aria-label="Main navigation">
             <button type="button" className="header-nav-link" onClick={onHomeClick}>Home</button>
             <button type="button" className="header-nav-link header-nav-link--cta" onClick={onGetStarted}>
@@ -139,11 +137,9 @@ export default function Header({
               {userBlock}
             </div>
           </div>
-
         </div>
       </header>
 
-      {/* Mobile drawer */}
       <div
         className={`nav-drawer-overlay ${menuOpen ? 'is-open' : ''}`}
         onClick={closeMenu}
@@ -168,7 +164,9 @@ export default function Header({
               <div className="nav-drawer-guest">Welcome to BuildX AI</div>
             )}
           </div>
-          <button type="button" className="nav-drawer-close" onClick={closeMenu} aria-label="Close menu">✕</button>
+          <button type="button" className="nav-drawer-close" onClick={closeMenu} aria-label="Close menu">
+            <X size={18} />
+          </button>
         </div>
 
         {drawerLinks}
@@ -180,6 +178,7 @@ export default function Header({
           </div>
           {user && (
             <button type="button" className="btn btn-ghost nav-drawer-logout" onClick={handleNav(onLogout)}>
+              <LogOut size={16} />
               Log out
             </button>
           )}

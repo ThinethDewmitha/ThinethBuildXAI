@@ -15,7 +15,7 @@ import { getFirebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
 import InstallPwa from './components/InstallPwa';
-import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number';
+import Welcome from './components/Welcome';
 
 
 const PHASES = {
@@ -89,7 +89,16 @@ export default function App() {
 
   const handleGetStartedNav = () => {
     setShowAdmin(false);
-    setShowAuth(true);
+    if (user) {
+      setShowAuth(false);
+      if (apiKey) {
+        setPhase(PHASES.MAP_SELECT);
+      } else {
+        setShowApiModal(true);
+      }
+    } else {
+      setShowAuth(true);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -272,88 +281,7 @@ export default function App() {
       )}
 
       {phase === PHASES.WELCOME && (
-        <div className="welcome-container">
-          <div className="welcome-hero">
-            <div className="welcome-hero-grid">
-              <div className="welcome-hero-copy">
-                <div className="welcome-badge">⚡ AI-Powered Engineering</div>
-                <h1 className="welcome-title">
-                  Build Anything, <em>Know Everything</em>
-                </h1>
-                <p className="welcome-subtitle">
-                  Upload site photos, map your location, and get a complete engineering blueprint
-                  with foundation specs, concrete mix ratios, material estimates, and step-by-step guides.
-                </p>
-
-                <div className="welcome-stats">
-                  <div className="welcome-stat">
-                    <strong><SlidingNumber number={4} inView /></strong>
-                    <span>Site Photos</span>
-                  </div>
-                  <div className="welcome-stat">
-                    <strong>IS</strong>
-                    <span>Standards</span>
-                  </div>
-                  <div className="welcome-stat">
-                    <strong>AI</strong>
-                    <span>Gemini Vision</span>
-                  </div>
-                  <div className="welcome-stat">
-                    <strong>₹</strong>
-                    <span>Cost Estimates</span>
-                  </div>
-                </div>
-
-                <div className="welcome-cta">
-                  <button className="btn btn-primary btn-large" onClick={handleGetStarted}>
-                    Get Started
-                  </button>
-                </div>
-              </div>
-
-              <div className="welcome-hero-visual" aria-hidden="true">
-                <div className="welcome-visual-card welcome-visual-card--1">
-                  <span>📐</span>
-                  <strong>Foundation Specs</strong>
-                  <p>Depth, width & reinforcement</p>
-                </div>
-                <div className="welcome-visual-card welcome-visual-card--2">
-                  <span>🧪</span>
-                  <strong>Mix Design</strong>
-                  <p>M15 – M30 concrete ratios</p>
-                </div>
-                <div className="welcome-visual-card welcome-visual-card--3">
-                  <span>💰</span>
-                  <strong>Cost Breakdown</strong>
-                  <p>Materials & market rates</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="welcome-features">
-            <div className="glass-card feature-card">
-              <div className="feature-icon-wrap">📸</div>
-              <div className="feature-title">Site Photo Analysis</div>
-              <div className="feature-desc">AI reads terrain, soil type, and conditions from photos of all sides.</div>
-            </div>
-            <div className="glass-card feature-card">
-              <div className="feature-icon-wrap">🧪</div>
-              <div className="feature-title">Concrete Mix Design</div>
-              <div className="feature-desc">Exact ratios and quantities for M15 to M30 grade concrete.</div>
-            </div>
-            <div className="glass-card feature-card">
-              <div className="feature-icon-wrap">💰</div>
-              <div className="feature-title">Detailed Cost Estimate</div>
-              <div className="feature-desc">Material-by-material breakdown based on current market prices.</div>
-            </div>
-            <div className="glass-card feature-card">
-              <div className="feature-icon-wrap">📋</div>
-              <div className="feature-title">Step-by-Step Guide</div>
-              <div className="feature-desc">Beginner-friendly instructions from foundation to finish.</div>
-            </div>
-          </div>
-        </div>
+        <Welcome onGetStarted={handleGetStarted} user={user} />
       )}
 
       {phase === PHASES.MAP_SELECT && (
@@ -376,7 +304,7 @@ export default function App() {
               <div className={`step-dot ${getCurrentStepNum() >= 4 ? 'active' : ''}`}>4</div>
             </div>
             <h2 className="wizard-title">
-              {phase === PHASES.UPLOAD ? '📸 Upload Your Site Photos' : '📐 Enter Building Specs'}
+              {phase === PHASES.UPLOAD ? 'Upload Your Site Photos' : 'Enter Building Specs'}
             </h2>
             <p className="wizard-desc">
               {phase === PHASES.UPLOAD
