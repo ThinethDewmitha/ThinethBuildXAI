@@ -2495,8 +2495,49 @@ h3 { font-size: 1.25rem; }
 .map-header { text-align: center; margin-bottom: 28px; }
 .map-header h2 { margin-bottom: 8px; }
 .map-header p { color: var(--text-secondary); font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
-.map-search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-.map-search-bar .form-input { flex: 1; }
+.map-search-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.map-search-bar .form-input { flex: 1; min-width: 200px; }
+.map-gps-btn { white-space: nowrap; flex-shrink: 0; }
+
+.map-gps-error {
+  margin: -6px 0 14px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-md);
+}
+
+.map-locate-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.map-locate-btn:hover:not(:disabled) {
+  background: #ffedd5;
+  border-color: #fdba74;
+  color: #c2410c;
+}
+
+.map-locate-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
 
 .map-wrapper {
   position: relative;

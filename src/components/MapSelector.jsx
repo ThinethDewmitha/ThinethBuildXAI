@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Search, Loader2, Check, ArrowLeft, Globe } from 'lucide-react';
+import { MapPin, Search, Loader2, Check, ArrowLeft, Globe, Crosshair } from 'lucide-react';
 
 /**
  * MapSelector – Interactive Leaflet map for selecting construction site location.
@@ -14,6 +14,8 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
+    const [gpsLoading, setGpsLoading] = useState(false);
+    const [gpsError, setGpsError] = useState('');
 
     useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) return;
@@ -35,18 +37,6 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 19,
         }).addTo(map);
-
-        // Try to get user's location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    map.setView([latitude, longitude], 15);
-                },
-                () => { /* Silently fail, keep default view */ },
-                { timeout: 5000 }
-            );
-        }
 
         // Click handler
         map.on('click', async (e) => {
@@ -139,6 +129,38 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
         setSearching(false);
     };
 
+    const useDeviceGps = () => {
+        if (!navigator.geolocation) {
+            setGpsError('Geolocation is not supported on this device or browser.');
+            return;
+        }
+
+        setGpsLoading(true);
+        setGpsError('');
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const map = mapRef.current;
+                if (map) {
+                    placeMarker(map, latitude, longitude);
+                    await reverseGeocode(latitude, longitude);
+                }
+                setGpsLoading(false);
+            },
+            (err) => {
+                const messages = {
+                    1: 'Location permission denied. Allow location access in your browser settings, then try again.',
+                    2: 'Could not detect your position. Move outdoors or use search instead.',
+                    3: 'GPS request timed out. Try again.',
+                };
+                setGpsError(messages[err.code] || 'Could not get your location.');
+                setGpsLoading(false);
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+        );
+    };
+
     const handleConfirm = () => {
         if (location) onLocationConfirm(location);
     };
@@ -152,7 +174,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
             <div className="map-header">
                 <div className="welcome-badge"><MapPin size={14} /> Step 1 of 4</div>
                 <h2>Select Your Construction Site</h2>
-                <p>Click on the map or search for a location to mark where you want to build. This helps us give accurate soil, climate, and regional recommendations.</p>
+                <p>Click on the map, search for an address, or use <strong>My GPS</strong> to mark your construction site. This helps us give accurate soil, climate, and regional recommendations.</p>
             </div>
 
             {/* Search Bar */}
@@ -164,14 +186,39 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
+                <button
+                    type="button"
+                    className="btn btn-secondary map-gps-btn"
+                    onClick={useDeviceGps}
+                    disabled={gpsLoading}
+                    title="Use your device GPS"
+                >
+                    {gpsLoading
+                        ? <Loader2 size={16} className="spin" />
+                        : <><Crosshair size={16} /> My GPS</>}
+                </button>
                 <button type="submit" className="btn btn-primary" disabled={searching}>
                     {searching ? <Loader2 size={16} className="spin" /> : <><Search size={16} /> Search</>}
                 </button>
             </form>
+            {gpsError && (
+                <p className="map-gps-error" role="alert">{gpsError}</p>
+            )}
 
             {/* Map Container */}
             <div className="map-wrapper">
                 <div ref={mapContainerRef} className="map-container" />
+
+                <button
+                    type="button"
+                    className="map-locate-btn"
+                    onClick={useDeviceGps}
+                    disabled={gpsLoading}
+                    title="Center map on my location"
+                    aria-label="Use my GPS location"
+                >
+                    {gpsLoading ? <Loader2 size={18} className="spin" /> : <Crosshair size={18} />}
+                </button>
 
                 {/* Location Info Overlay */}
                 {location && (
