@@ -87,9 +87,9 @@ export default function App() {
   };
 
   const handleGetStartedNav = () => {
-    setShowAuth(false);
     setShowAdmin(false);
-    handleGetStarted();
+    setShowAuth(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleApiKeySet = (key) => {
@@ -100,13 +100,7 @@ export default function App() {
     setPhase(PHASES.MAP_SELECT);
   };
 
-  const handleGetStarted = () => {
-    if (apiKey) {
-      setPhase(PHASES.MAP_SELECT);
-    } else {
-      setShowApiModal(true);
-    }
-  };
+  const handleGetStarted = handleGetStartedNav;
 
   const handleLocationConfirm = (loc) => {
     setSiteLocation(loc);
