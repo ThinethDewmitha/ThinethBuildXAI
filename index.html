@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="BuildX AI - AI-powered construction assistant. Upload site photos, get engineering blueprints, material estimates, and step-by-step building guides." />
+    <meta name="theme-color" content="#0c0f14" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="BuildX AI" />
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="BuildX AI" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script>
+      (function () {
+        var t = localStorage.getItem('buildx_theme') || 'system';
+        var dark = t === 'system'
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : t === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#0c0f14' : '#f4f6fb';
+      })();
+    </script>
+    <title>BuildX AI — Construction Blueprint Generator</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
