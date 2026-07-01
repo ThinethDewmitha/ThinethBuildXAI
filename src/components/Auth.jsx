@@ -5,6 +5,7 @@ import {
   signUpWithEmail,
   isFirebaseConfigured,
   mapFirebaseAuthError,
+  resetPassword,
 } from '../services/firebase';
 import { syncFirebaseSession } from '../services/api';
 
@@ -229,18 +230,34 @@ export default function Auth({ onLogin }) {
         }
         await completeFirebaseAuth(firebaseUser);
       } else {
-        firebaseUser = await signUpWithEmail(formData.email, formData.password, formData.name);
-        await completeFirebaseAuth(firebaseUser, {
+        const profile = {
           name: formData.name,
           phone: formData.phone,
           address: formData.address,
           adminSecret: formData.adminSecret || undefined,
-        });
+        };
+        try {
+          firebaseUser = await signUpWithEmail(formData.email, formData.password, formData.name);
+        } catch (signUpErr) {
+          if (signUpErr?.code === 'auth/email-already-in-use') {
+            try {
+              firebaseUser = await signInWithEmail(formData.email, formData.password);
+            } catch (signInErr) {
+              setIsLogin(true);
+              throw signInErr;
+            }
+          } else {
+            throw signUpErr;
+          }
+        }
+        await completeFirebaseAuth(firebaseUser, profile);
       }
     } catch (err) {
-      setError(err.message?.includes('Firebase is not configured')
-        ? err.message
-        : (err.message || mapFirebaseAuthError(err)));
+      setError(
+        err.message?.includes('Firebase is not configured')
+          ? err.message
+          : mapFirebaseAuthError(err),
+      );
     } finally {
       setLoading(false);
     }
@@ -249,6 +266,28 @@ export default function Auth({ onLogin }) {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError('');
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email?.trim()) {
+      setError('Enter your email above, then click Forgot Password.');
+      return;
+    }
+    if (!isFirebaseConfigured()) {
+      setError('Firebase is not configured. Add VITE_FIREBASE_* keys to .env.local.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await resetPassword(formData.email);
+      setError('');
+      alert(`Password reset email sent to ${formData.email.trim()}. Check your inbox (and spam folder).`);
+    } catch (err) {
+      setError(mapFirebaseAuthError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -442,7 +481,7 @@ export default function Auth({ onLogin }) {
                   <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                   <span>Remember me</span>
                 </label>
-                <button type="button" className="auth-link" onClick={() => setError('Password reset is not available yet. Contact your administrator.')}>
+                <button type="button" className="auth-link" onClick={handleForgotPassword} disabled={loading}>
                   Forgot Password?
                 </button>
               </div>

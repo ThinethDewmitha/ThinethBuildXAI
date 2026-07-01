@@ -336,9 +336,6 @@ app.post('/api/auth/session', rateLimit(60_000, 20), async (req, res) => {
         }
 
         const decoded = await verifyFirebaseIdToken(firebaseApp, idToken);
-        if (decoded.email_verified === false) {
-            return res.status(403).json({ error: 'Please verify your email before signing in.' });
-        }
 
         const user = upsertUserFromFirebaseProfile(decoded, { name, phone, address, adminSecret });
         if (user.status === 'suspended') {
