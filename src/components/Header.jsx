@@ -10,6 +10,7 @@ function MenuIcon({ open }) {
 
 export default function Header({
   apiKey,
+  groqApiKey,
   user,
   onLogout,
   onAdminPanel,
@@ -38,10 +39,19 @@ export default function Header({
     fn?.();
   };
 
+  const aiReady = Boolean(apiKey);
+  const dualAi = Boolean(apiKey && groqApiKey);
+  const apiStatusLabel = !apiKey ? 'No Key' : dualAi ? 'Gemini + Groq' : 'Gemini';
+  const apiStatusTitle = !apiKey
+    ? 'No API key set'
+    : dualAi
+      ? 'Dual AI: Gemini vision + Groq merge'
+      : 'Gemini connected — add Groq for dual-AI';
+
   const apiStatus = (
-    <div className="api-status" title={apiKey ? 'Gemini API connected' : 'No API key set'}>
-      <div className={`api-status-dot ${apiKey ? 'connected' : ''}`} />
-      <span className="api-status-label">{apiKey ? 'AI Ready' : 'No Key'}</span>
+    <div className="api-status" title={apiStatusTitle}>
+      <div className={`api-status-dot ${aiReady ? 'connected' : ''} ${dualAi ? 'connected-dual' : ''}`} />
+      <span className="api-status-label">{apiStatusLabel}</span>
     </div>
   );
 

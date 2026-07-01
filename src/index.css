@@ -814,6 +814,11 @@ h3 { font-size: 1.25rem; }
   animation: pulse-dot 2s infinite;
 }
 
+.api-status-dot.connected-dual {
+  background: linear-gradient(135deg, var(--accent-emerald), var(--accent-blue));
+  box-shadow: 0 0 10px var(--accent-blue-glow);
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.45; }
@@ -1439,6 +1444,76 @@ h3 { font-size: 1.25rem; }
 .modal-input-group .form-input { flex: 1; font-family: var(--font-mono); font-size: 0.9rem; }
 .modal-error { color: var(--accent-red); font-size: 0.85rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
 .modal-success { color: var(--accent-emerald); font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+
+.modal-content--wide { max-width: 720px; }
+
+.modal-ai-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.modal-ai-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-ai-card--groq {
+  border-color: rgba(59, 130, 246, 0.35);
+  background: var(--accent-blue-dim);
+}
+
+.modal-ai-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.modal-ai-required {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.modal-ai-optional {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.modal-ai-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.modal-steps--compact { margin-bottom: 0; padding: 12px; }
+
+.modal-input-group--connect { justify-content: center; margin-top: 4px; }
+
+@media (max-width: 640px) {
+  .modal-ai-grid { grid-template-columns: 1fr; }
+}
 
 /* ═══ WIZARD ═════════════════════════════════════════════════════════════ */
 .wizard-container {

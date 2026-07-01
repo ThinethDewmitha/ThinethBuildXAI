@@ -11,13 +11,21 @@ const ANALYSIS_STEPS = [
   { id: 7, text: 'Compiling engineering blueprint' },
 ];
 
-export default function AnalysisLoader() {
+export default function AnalysisLoader({ dualAi = false }) {
+  const steps = dualAi
+    ? [
+        ...ANALYSIS_STEPS.slice(0, 2),
+        { id: 2.5, text: 'Groq cross-checking site photos' },
+        { id: 2.6, text: 'Merging Gemini + Groq insights' },
+        ...ANALYSIS_STEPS.slice(2),
+      ]
+    : ANALYSIS_STEPS;
   const [activeStep, setActiveStep] = useState(0);
   const [showSlowMsg, setShowSlowMsg] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setActiveStep((prev) => (prev < ANALYSIS_STEPS.length - 1 ? prev + 1 : prev));
+      setActiveStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
     }, 2500);
 
     const slowTimer = setTimeout(() => setShowSlowMsg(true), 25000);
@@ -34,10 +42,12 @@ export default function AnalysisLoader() {
         <Loader2 size={40} className="loader-ring-icon" />
       </div>
       <h2 className="loader-title">Building Your Blueprint</h2>
-      <p className="loader-subtitle">Our AI engineer is analyzing your project</p>
+      <p className="loader-subtitle">
+        {dualAi ? 'Gemini + Groq are analyzing your project' : 'Our AI engineer is analyzing your project'}
+      </p>
 
       <div className="loader-steps">
-        {ANALYSIS_STEPS.map((step, index) => {
+        {steps.map((step, index) => {
           const done = index < activeStep;
           const active = index === activeStep;
           return (

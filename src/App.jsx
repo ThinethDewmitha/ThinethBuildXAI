@@ -9,7 +9,7 @@ import BlueprintView from './components/BlueprintView';
 import SpecValidator from './components/SpecValidator';
 import Auth from './components/Auth';
 import AdminDashboard from './components/AdminDashboard';
-import { initializeGemini, analyzeSite, generateBlueprintImage, refineBlueprint, validateSpecs as aiValidateSpecs } from './services/gemini';
+import { initializeAI, analyzeSite, generateBlueprintImage, refineBlueprint, validateSpecs as aiValidateSpecs } from './services/ai';
 import { convertUnits, generateFullEstimate } from './services/calculator';
 import { getStoredUser, getStoredToken, logout as apiLogout, syncFirebaseSession } from './services/api';
 import { getFirebaseAuth } from './services/firebase';
@@ -33,6 +33,7 @@ const PHASES = {
 export default function App() {
   const [phase, setPhase] = useState(PHASES.WELCOME);
   const [apiKey, setApiKey] = useState(null);
+  const [groqApiKey, setGroqApiKey] = useState(null);
   const [showApiModal, setShowApiModal] = useState(false);
   const [photos, setPhotos] = useState({});
 
@@ -52,12 +53,21 @@ export default function App() {
   // Load stored API key and restore auth session
   useEffect(() => {
     const storedKey = localStorage.getItem('buildx_api_key');
+    const storedGroqKey = localStorage.getItem('buildx_groq_api_key');
     const envKey = import.meta.env.VITE_GEMINI_API_KEY;
+    const envGroqKey = import.meta.env.VITE_GROQ_API_KEY;
     const key = storedKey || envKey;
+    const groqKey = storedGroqKey || envGroqKey;
     if (key) {
       if (!storedKey && envKey) localStorage.setItem('buildx_api_key', envKey);
       setApiKey(key);
-      initializeGemini(key);
+    }
+    if (groqKey) {
+      if (!storedGroqKey && envGroqKey) localStorage.setItem('buildx_groq_api_key', envGroqKey);
+      setGroqApiKey(groqKey);
+    }
+    if (key || groqKey) {
+      initializeAI({ geminiKey: key, groqKey });
     }
 
     const storedUser = getStoredUser();
@@ -131,10 +141,17 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleApiKeySet = (key) => {
-    localStorage.setItem('buildx_api_key', key);
-    setApiKey(key);
-    initializeGemini(key);
+  const handleApiKeySet = ({ geminiKey, groqKey }) => {
+    localStorage.setItem('buildx_api_key', geminiKey);
+    setApiKey(geminiKey);
+    if (groqKey) {
+      localStorage.setItem('buildx_groq_api_key', groqKey);
+      setGroqApiKey(groqKey);
+    } else {
+      localStorage.removeItem('buildx_groq_api_key');
+      setGroqApiKey(null);
+    }
+    initializeAI({ geminiKey, groqKey });
     setShowApiModal(false);
     setPhase(PHASES.MAP_SELECT);
   };
@@ -257,6 +274,7 @@ export default function App() {
       <>
         <Header
           apiKey={apiKey}
+          groqApiKey={groqApiKey}
           user={user}
           onLogout={handleLogout}
           onAdminPanel={() => setShowAdmin(true)}
@@ -276,6 +294,7 @@ export default function App() {
       <>
         <Header
           apiKey={apiKey}
+          groqApiKey={groqApiKey}
           user={user}
           onLogout={handleLogout}
           onAdminPanel={() => setShowAdmin(true)}
@@ -293,6 +312,7 @@ export default function App() {
     <>
       <Header
         apiKey={apiKey}
+        groqApiKey={groqApiKey}
         user={user}
         onLogout={handleLogout}
         onAdminPanel={() => setShowAdmin(true)}
@@ -404,7 +424,7 @@ export default function App() {
         />
       )}
 
-      {phase === PHASES.ANALYZING && <AnalysisLoader />}
+      {phase === PHASES.ANALYZING && <AnalysisLoader dualAi={Boolean(groqApiKey)} />}
 
       {phase === PHASES.RESULTS && (
         <BlueprintView

@@ -45,9 +45,14 @@ export async function validateApiKey(apiKey) {
       return { valid: false, error: 'API key is too short or contains invalid characters.' };
     }
 
-    // Check format: Google API keys start with 'AIza' and are ~39 chars
-    if (!cleanKey.startsWith('AIza') || cleanKey.length < 30) {
-      return { valid: false, error: 'This doesn\'t look like a valid Google API key. Keys start with "AIza" and are about 39 characters long.' };
+    // Google AI Studio keys: classic AIza… or newer AQ.… tokens
+    const isClassicKey = cleanKey.startsWith('AIza') && cleanKey.length >= 30;
+    const isNewFormatKey = cleanKey.startsWith('AQ.') && cleanKey.length >= 20;
+    if (!isClassicKey && !isNewFormatKey) {
+      return {
+        valid: false,
+        error: 'This doesn\'t look like a valid Google API key. Get one from Google AI Studio (usually starts with "AIza").',
+      };
     }
 
     // Accept key by format — no test API call to save quota
