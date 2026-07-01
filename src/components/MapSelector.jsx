@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { MapPin, Search, Loader2, Check, ArrowLeft, Globe, Crosshair } from 'lucide-react';
 
 /**
@@ -11,14 +11,35 @@ const NOMINATIM_HEADERS = {
     'User-Agent': 'BuildXAI/1.0 (https://thineth-buildx-ai.vercel.app; support@buildx.ai)',
 };
 
+const SUGGESTION_MIN_CHARS = 2;
+const SUGGESTION_DEBOUNCE_MS = 400;
+
+function suggestionPrimaryLabel(item) {
+    const addr = item.address || {};
+    return addr.city || addr.town || addr.village || addr.suburb || addr.county || item.display_name?.split(',')[0] || 'Location';
+}
+
+function suggestionSecondaryLabel(item) {
+    const parts = (item.display_name || '').split(',').map((p) => p.trim()).filter(Boolean);
+    if (parts.length <= 1) return '';
+    return parts.slice(1).join(', ');
+}
+
 export default function MapSelector({ onLocationConfirm, onBack }) {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markerRef = useRef(null);
+    const searchWrapRef = useRef(null);
+    const searchDebounceRef = useRef(null);
+    const searchAbortRef = useRef(null);
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searching, setSearching] = useState(false);
+    const [suggestions, setSuggestions] = useState([]);
+    const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+    const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const [gpsLoading, setGpsLoading] = useState(false);
     const [gpsError, setGpsError] = useState('');
 
@@ -107,26 +128,116 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
         setLoading(false);
     };
 
+    const applyPlaceResult = async (result) => {
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        const map = mapRef.current;
+        if (map) {
+            placeMarker(map, lat, lng);
+            map.setView([lat, lng], 16);
+            await reverseGeocode(lat, lng);
+        }
+        setSearchQuery(result.display_name || '');
+        setSuggestions([]);
+        setSuggestionsOpen(false);
+        setActiveSuggestionIndex(-1);
+    };
+
+    const fetchSuggestions = useCallback(async (query) => {
+        if (searchAbortRef.current) searchAbortRef.current.abort();
+        searchAbortRef.current = new AbortController();
+        setSuggestionsLoading(true);
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+                { headers: NOMINATIM_HEADERS, signal: searchAbortRef.current.signal },
+            );
+            const results = await res.json();
+            setSuggestions(Array.isArray(results) ? results : []);
+            setSuggestionsOpen(true);
+            setActiveSuggestionIndex(-1);
+        } catch (err) {
+            if (err.name !== 'AbortError') {
+                setSuggestions([]);
+            }
+        } finally {
+            setSuggestionsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const query = searchQuery.trim();
+        if (query.length < SUGGESTION_MIN_CHARS) {
+            setSuggestions([]);
+            setSuggestionsLoading(false);
+            return undefined;
+        }
+
+        if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = setTimeout(() => {
+            fetchSuggestions(query);
+        }, SUGGESTION_DEBOUNCE_MS);
+
+        return () => {
+            if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+        };
+    }, [searchQuery, fetchSuggestions]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+                setSuggestionsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectSuggestion = async (item) => {
+        setSearching(true);
+        try {
+            await applyPlaceResult(item);
+        } finally {
+            setSearching(false);
+        }
+    };
+
+    const handleSearchKeyDown = (e) => {
+        if (!suggestionsOpen || suggestions.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActiveSuggestionIndex((i) => Math.min(i + 1, suggestions.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActiveSuggestionIndex((i) => Math.max(i - 1, 0));
+        } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+            e.preventDefault();
+            selectSuggestion(suggestions[activeSuggestionIndex]);
+        } else if (e.key === 'Escape') {
+            setSuggestionsOpen(false);
+            setActiveSuggestionIndex(-1);
+        }
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         if (!searchQuery.trim()) return;
+
+        if (suggestionsOpen && activeSuggestionIndex >= 0 && suggestions[activeSuggestionIndex]) {
+            await selectSuggestion(suggestions[activeSuggestionIndex]);
+            return;
+        }
+
         setSearching(true);
         try {
             const res = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`,
-                { headers: NOMINATIM_HEADERS }
+                { headers: NOMINATIM_HEADERS },
             );
             const results = await res.json();
             if (results.length > 0) {
-                const r = results[0];
-                const lat = parseFloat(r.lat);
-                const lng = parseFloat(r.lon);
-                const map = mapRef.current;
-                if (map) {
-                    placeMarker(map, lat, lng);
-                    map.setView([lat, lng], 16);
-                    await reverseGeocode(lat, lng);
-                }
+                await applyPlaceResult(results[0]);
             }
         } catch (err) {
             console.warn('Search failed:', err);
@@ -184,13 +295,64 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
 
             {/* Search Bar */}
             <form className="map-search-bar" onSubmit={handleSearch}>
-                <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Search a location (e.g., Chennai, India or an address)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <div className="map-search-input-wrap" ref={searchWrapRef}>
+                    <input
+                        type="text"
+                        className="form-input"
+                        placeholder="Search a location (e.g., Chennai, India or an address)"
+                        value={searchQuery}
+                        onChange={(e) => {
+                            setSearchQuery(e.target.value);
+                            setSuggestionsOpen(true);
+                        }}
+                        onFocus={() => {
+                            if (suggestions.length > 0) setSuggestionsOpen(true);
+                        }}
+                        onKeyDown={handleSearchKeyDown}
+                        role="combobox"
+                        aria-expanded={suggestionsOpen && suggestions.length > 0}
+                        aria-autocomplete="list"
+                        aria-controls="map-search-suggestions"
+                    />
+                    {suggestionsLoading && (
+                        <span className="map-search-input-spinner" aria-hidden="true">
+                            <Loader2 size={16} className="spin" />
+                        </span>
+                    )}
+                    {suggestionsOpen && searchQuery.trim().length >= SUGGESTION_MIN_CHARS && (
+                        <ul
+                            id="map-search-suggestions"
+                            className="map-search-suggestions"
+                            role="listbox"
+                        >
+                            {suggestions.length === 0 && !suggestionsLoading && (
+                                <li className="map-search-suggestion map-search-suggestion--empty">
+                                    No places found — try a city or full address
+                                </li>
+                            )}
+                            {suggestions.map((item, index) => (
+                                <li key={item.place_id || `${item.lat}-${item.lon}-${index}`}>
+                                    <button
+                                        type="button"
+                                        className={`map-search-suggestion${index === activeSuggestionIndex ? ' active' : ''}`}
+                                        role="option"
+                                        aria-selected={index === activeSuggestionIndex}
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => selectSuggestion(item)}
+                                    >
+                                        <MapPin size={14} className="map-search-suggestion-icon" />
+                                        <span>
+                                            <span className="map-search-suggestion-main">{suggestionPrimaryLabel(item)}</span>
+                                            {suggestionSecondaryLabel(item) && (
+                                                <span className="map-search-suggestion-meta">{suggestionSecondaryLabel(item)}</span>
+                                            )}
+                                        </span>
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
                 <button
                     type="button"
                     className="btn btn-secondary map-gps-btn"
