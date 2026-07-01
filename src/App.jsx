@@ -15,7 +15,6 @@ import { getStoredUser, getStoredToken, logout as apiLogout, syncFirebaseSession
 import { getFirebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
-import InstallPwa from './components/InstallPwa';
 import Welcome from './components/Welcome';
 
 
@@ -227,7 +226,6 @@ export default function App() {
   if (showAdmin && user?.isAdmin) {
     return (
       <>
-        <InstallPwa />
         <Header
           apiKey={apiKey}
           user={user}
@@ -246,7 +244,6 @@ export default function App() {
   if (showAuth) {
     return (
       <>
-        <InstallPwa />
         <Header
           apiKey={apiKey}
           user={user}
@@ -272,8 +269,6 @@ export default function App() {
         onHomeClick={handleGoHome}
         onGetStarted={handleGetStartedNav}
       />
-
-      <InstallPwa />
 
       <main className="app-main">
 

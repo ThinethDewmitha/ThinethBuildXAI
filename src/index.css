@@ -1777,7 +1777,7 @@ h3 { font-size: 1.25rem; }
 
 .auth-social-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-bottom: 8px;
 }
