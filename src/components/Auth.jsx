@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   signInWithGoogle,
   signInWithEmail,
@@ -134,6 +134,7 @@ function GoogleIcon() {
 }
 
 export default function Auth({ onLogin }) {
+  const formPanelRef = useRef(null);
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -181,6 +182,11 @@ export default function Auth({ onLogin }) {
       setRememberMe(true);
     }
   }, []);
+
+  useEffect(() => {
+    formPanelRef.current?.scrollTo?.(0, 0);
+    window.scrollTo(0, 0);
+  }, [isLogin]);
 
   const checkPasswordStrength = (pwd) => {
     let score = 0;
@@ -296,7 +302,7 @@ export default function Auth({ onLogin }) {
   return (
     <div className="auth-page animate-in">
       <div className="auth-shell">
-        <div className="auth-panel-form">
+        <div className="auth-panel-form" ref={formPanelRef}>
           <BuildXLogo />
 
           <div className="auth-heading">

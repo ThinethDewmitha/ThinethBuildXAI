@@ -309,7 +309,9 @@ export default function App() {
           onGetStarted={handleGetStartedNav}
           onMyProjects={handleMyProjects}
         />
-        <Auth onLogin={handleLogin} />
+        <main className="app-main">
+          <Auth onLogin={handleLogin} />
+        </main>
       </>
     );
   }

@@ -12,7 +12,8 @@
     "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel:env-check": "node scripts/vercel-env-check.mjs"
+    "vercel:env-check": "node scripts/vercel-env-check.mjs",
+    "setup:firebase": "node scripts/fetch-firebase-web-config.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

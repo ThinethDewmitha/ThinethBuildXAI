@@ -1925,29 +1925,27 @@ body.app-chrome-active .header {
 .auth-page {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 32px 20px 48px;
-  background: var(--bg-primary);
+  padding: 28px 24px 56px;
+  background: transparent;
   min-height: calc(100vh - 72px);
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
 }
 
-[data-theme='light'] .auth-page {
-  background: linear-gradient(165deg, #fff7ed 0%, #f4f6fb 45%, #eef2ff 100%);
-}
-
+[data-theme='light'] .auth-page,
 [data-theme='dark'] .auth-page {
-  background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, var(--auth-accent-soft) 0%, transparent 55%),
-    var(--bg-primary);
+  background: transparent;
 }
 
 .auth-shell {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.12fr 0.88fr;
   width: 100%;
-  max-width: 980px;
-  min-height: 580px;
+  max-width: 1180px;
+  min-height: unset;
   background: var(--auth-form-bg);
   border: 1px solid var(--border-medium);
   border-radius: 20px;
@@ -1956,12 +1954,20 @@ body.app-chrome-active .header {
 }
 
 .auth-panel-form {
-  padding: 40px 44px;
+  padding: 44px 48px 48px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  max-height: calc(100vh - 120px);
+  justify-content: flex-start;
+  overflow: visible;
+  max-height: none;
+  min-width: 0;
+  min-height: min-content;
   background: var(--auth-form-bg);
+}
+
+@media (min-width: 1200px) {
+  .auth-shell { max-width: 1240px; }
+  .auth-panel-form { padding: 48px 56px 52px; }
 }
 
 .auth-brand {
@@ -2106,6 +2112,7 @@ body.app-chrome-active .header {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  width: 100%;
 }
 
 .auth-field { display: flex; flex-direction: column; gap: 4px; }
@@ -3496,6 +3503,10 @@ body.app-chrome-active .header {
   .blueprint-grid-results .blueprint-full-width { grid-column: span 1; }
   .estimate-grid { grid-template-columns: repeat(3, 1fr); }
 
+}
+
+/* Auth: stack form only on narrower viewports (keep split + promo on tablet landscape) */
+@media (max-width: 900px) {
   .auth-shell { max-width: 520px; grid-template-columns: 1fr; }
   .auth-panel-promo { display: none; }
 }
