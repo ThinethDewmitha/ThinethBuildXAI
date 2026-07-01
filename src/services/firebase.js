@@ -78,6 +78,7 @@ export function mapFirebaseAuthError(error) {
         'auth/invalid-credential': 'Invalid email or password.',
         'auth/popup-closed-by-user': 'Google sign-in was cancelled.',
         'auth/popup-blocked': 'Popup was blocked. Allow popups for this site and try again.',
+        'auth/unauthorized-domain': 'This site is not authorized for sign-in. Add it in Firebase Console → Authentication → Settings → Authorized domains.',
         'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
         'auth/network-request-failed': 'Network error. Check your connection and try again.',
     };

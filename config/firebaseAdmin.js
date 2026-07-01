@@ -1,6 +1,6 @@
 /**
  * Initialize Firebase Admin SDK from service account JSON or env.
- * Uses dynamic import so Vercel serverless does not bundle jose/jwks-rsa at cold start.
+ * Uses dynamic import for firebase-admin/app and jose (avoids jwks-rsa CJS/ESM crash on Vercel).
  */
 import fs from 'fs';
 import { join } from 'path';
@@ -76,6 +76,30 @@ export async function getFirebaseAdmin(rootDir) {
 }
 
 export async function verifyFirebaseIdToken(app, idToken) {
-    const { getAuth } = await import('firebase-admin/auth');
-    return getAuth(app).verifyIdToken(idToken);
+    const projectId = app?.options?.projectId
+        || process.env.FIREBASE_PROJECT_ID
+        || process.env.VITE_FIREBASE_PROJECT_ID;
+
+    if (!projectId) {
+        throw new Error('Firebase project ID is not configured.');
+    }
+
+    const { createRemoteJWKSet, jwtVerify } = await import('jose');
+
+    const jwks = createRemoteJWKSet(
+        new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'),
+    );
+
+    const { payload } = await jwtVerify(idToken, jwks, {
+        issuer: `https://securetoken.google.com/${projectId}`,
+        audience: projectId,
+    });
+
+    return {
+        ...payload,
+        uid: payload.sub,
+        email: payload.email,
+        email_verified: payload.email_verified,
+        name: payload.name,
+    };
 }
