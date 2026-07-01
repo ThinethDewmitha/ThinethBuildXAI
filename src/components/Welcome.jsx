@@ -1,44 +1,80 @@
 import React from 'react';
 import {
   Zap, Camera, MapPin, Ruler, FlaskConical, IndianRupee,
-  FileText, Shield, ArrowRight, Layers, HardHat,
+  FileText, Shield, ArrowRight, Layers, HardHat, CheckCircle2,
+  Building2, Droplets, Hammer, BarChart3,
 } from 'lucide-react';
 import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number';
+
+const DELIVERABLES = [
+  { icon: Building2, title: 'Foundation Design', detail: 'Type, depth, width, rebar spacing & footing layout' },
+  { icon: FlaskConical, title: 'Concrete Mix (M15–M30)', detail: 'Cement, sand, aggregate ratios with bag counts' },
+  { icon: Hammer, title: 'Steel & Reinforcement', detail: 'TMT bar sizes, weight in kg/tons per element' },
+  { icon: Droplets, title: 'Soil Assessment', detail: 'Bearing capacity, drainage & terrain from your photos' },
+  { icon: IndianRupee, title: 'Material Cost Table', detail: 'Cement, bricks, sand, aggregate at 2026 market rates' },
+  { icon: BarChart3, title: 'Quantity Schedule', detail: 'Full BOQ — cement bags, CFT sand, wall units, steel tons' },
+];
 
 const FEATURES = [
   {
     icon: Camera,
     title: 'Site Photo Analysis',
-    desc: 'AI reads terrain, soil type, and conditions from photos of all sides.',
+    desc: 'AI reads terrain, soil type, slope, and ground conditions from 4 site photos.',
+    bullets: ['Front, side & ground close-up', 'Soil type classification', 'Drainage & slope notes'],
   },
   {
     icon: FlaskConical,
     title: 'Concrete Mix Design',
-    desc: 'Exact ratios and quantities for M15 to M30 grade concrete.',
+    desc: 'Grade-specific ratios cross-checked against IS 10262 and your building load.',
+    bullets: ['M15, M20, M25, M30 grades', 'Water–cement ratio', 'Per-floor volume estimates'],
   },
   {
     icon: IndianRupee,
     title: 'Detailed Cost Estimate',
-    desc: 'Material-by-material breakdown based on current market prices.',
+    desc: 'Line-item material costs you can verify with local suppliers.',
+    bullets: ['Cement & steel pricing', 'Brick/block quantities', 'Total project cost range'],
   },
   {
     icon: FileText,
     title: 'Step-by-Step Guide',
-    desc: 'Beginner-friendly instructions from foundation to finish.',
+    desc: 'Beginner-friendly construction sequence from excavation to finish.',
+    bullets: ['Foundation to roof stages', 'Safety checkpoints', 'DPC & curing instructions'],
   },
 ];
 
 const STEPS = [
-  { icon: MapPin, label: 'Map Site', num: '01' },
-  { icon: Camera, label: 'Upload Photos', num: '02' },
-  { icon: Ruler, label: 'Enter Specs', num: '03' },
-  { icon: Layers, label: 'Get Blueprint', num: '04' },
+  {
+    icon: MapPin,
+    label: 'Map Site',
+    num: '01',
+    detail: 'Pin your plot on the map or enter coordinates manually.',
+  },
+  {
+    icon: Camera,
+    label: 'Upload Photos',
+    num: '02',
+    detail: '4 photos — 3 sides of the plot plus a ground close-up.',
+  },
+  {
+    icon: Ruler,
+    label: 'Enter Specs',
+    num: '03',
+    detail: 'Length, width, floors, wall type & building purpose.',
+  },
+  {
+    icon: Layers,
+    label: 'Get Blueprint',
+    num: '04',
+    detail: 'Full engineering report with costs in under 2 minutes.',
+  },
 ];
 
 const PREVIEW_ITEMS = [
-  { icon: Ruler, title: 'Foundation Specs', desc: 'Depth, width & reinforcement' },
-  { icon: FlaskConical, title: 'Mix Design', desc: 'M15 – M30 concrete ratios' },
-  { icon: IndianRupee, title: 'Cost Breakdown', desc: 'Materials & market rates' },
+  { icon: Ruler, title: 'Foundation', desc: 'Strip footing · 1.2 m depth · Fe 500 rebar', value: 'IS 456' },
+  { icon: FlaskConical, title: 'Mix Design', desc: 'M20 · 1:1.5:3 · ~142 cement bags', value: 'M20' },
+  { icon: IndianRupee, title: 'Est. Cost', desc: 'Materials + labour breakdown', value: '₹4.2L+' },
+  { icon: Hammer, title: 'Steel', desc: '2.4 tons TMT · 12mm & 16mm bars', value: '2.4 t' },
+  { icon: Droplets, title: 'Soil', desc: 'Medium sand · 250 kN/m² bearing', value: 'Good' },
 ];
 
 export default function Welcome({ onGetStarted, user }) {
@@ -97,17 +133,20 @@ export default function Welcome({ onGetStarted, user }) {
             <div className="welcome-preview-shell">
               <div className="welcome-preview-header">
                 <HardHat size={16} />
-                <span>Engineering Blueprint</span>
+                <span>Sample Engineering Blueprint</span>
                 <span className="welcome-preview-live">Live</span>
               </div>
               <div className="welcome-preview-body">
-                {PREVIEW_ITEMS.map(({ icon: Icon, title, desc }) => (
+                {PREVIEW_ITEMS.map(({ icon: Icon, title, desc, value }) => (
                   <div key={title} className="welcome-preview-row">
                     <div className="welcome-preview-icon">
                       <Icon size={18} strokeWidth={2} />
                     </div>
-                    <div>
-                      <strong>{title}</strong>
+                    <div className="welcome-preview-text">
+                      <div className="welcome-preview-row-top">
+                        <strong>{title}</strong>
+                        <span className="welcome-preview-value">{value}</span>
+                      </div>
                       <p>{desc}</p>
                     </div>
                   </div>
@@ -119,31 +158,73 @@ export default function Welcome({ onGetStarted, user }) {
         </div>
       </section>
 
-      <section className="welcome-pipeline" aria-label="How it works">
-        {STEPS.map(({ icon: Icon, label, num }, i) => (
-          <React.Fragment key={label}>
-            <div className="welcome-pipeline-step">
-              <div className="welcome-pipeline-num">{num}</div>
-              <div className="welcome-pipeline-icon">
+      <section className="welcome-deliverables" aria-labelledby="deliverables-heading">
+        <div className="welcome-section-head">
+          <h2 id="deliverables-heading">What&apos;s in your blueprint</h2>
+          <p>Every project report includes these engineering deliverables</p>
+        </div>
+        <div className="welcome-deliverables-grid">
+          {DELIVERABLES.map(({ icon: Icon, title, detail }) => (
+            <div key={title} className="welcome-deliverable-card glass-card">
+              <div className="welcome-deliverable-icon">
                 <Icon size={20} strokeWidth={2} />
               </div>
-              <span>{label}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{detail}</p>
+              </div>
+              <CheckCircle2 size={16} className="welcome-deliverable-check" />
             </div>
-            {i < STEPS.length - 1 && <div className="welcome-pipeline-line" />}
-          </React.Fragment>
-        ))}
+          ))}
+        </div>
       </section>
 
-      <section className="welcome-features">
-        {FEATURES.map(({ icon: Icon, title, desc }) => (
-          <article key={title} className="glass-card feature-card">
-            <div className="feature-icon-wrap">
-              <Icon size={22} strokeWidth={2} />
-            </div>
-            <h3 className="feature-title">{title}</h3>
-            <p className="feature-desc">{desc}</p>
-          </article>
-        ))}
+      <section className="welcome-pipeline-wrap" aria-labelledby="pipeline-heading">
+        <div className="welcome-section-head">
+          <h2 id="pipeline-heading">How it works</h2>
+          <p>Four steps from site photos to a full engineering report</p>
+        </div>
+        <div className="welcome-pipeline">
+          {STEPS.map(({ icon: Icon, label, num, detail }, i) => (
+            <React.Fragment key={label}>
+              <div className="welcome-pipeline-step">
+                <div className="welcome-pipeline-num">{num}</div>
+                <div className="welcome-pipeline-icon">
+                  <Icon size={20} strokeWidth={2} />
+                </div>
+                <strong className="welcome-pipeline-label">{label}</strong>
+                <p className="welcome-pipeline-detail">{detail}</p>
+              </div>
+              {i < STEPS.length - 1 && <div className="welcome-pipeline-line" />}
+            </React.Fragment>
+          ))}
+        </div>
+      </section>
+
+      <section className="welcome-features-wrap" aria-labelledby="features-heading">
+        <div className="welcome-section-head">
+          <h2 id="features-heading">Built for real construction</h2>
+          <p>AI analysis backed by civil engineering formulas and Indian standards</p>
+        </div>
+        <div className="welcome-features">
+          {FEATURES.map(({ icon: Icon, title, desc, bullets }) => (
+            <article key={title} className="glass-card feature-card">
+              <div className="feature-icon-wrap">
+                <Icon size={22} strokeWidth={2} />
+              </div>
+              <h3 className="feature-title">{title}</h3>
+              <p className="feature-desc">{desc}</p>
+              <ul className="feature-bullets">
+                {bullets.map((b) => (
+                  <li key={b}>
+                    <CheckCircle2 size={13} />
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
       </section>
     </div>
   );

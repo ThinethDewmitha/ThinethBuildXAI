@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import {
+    Settings, Printer, AlertTriangle, Shield, MapPin, Globe, Building2,
+    FlaskConical, Zap, IndianRupee, ClipboardList, Building, Ruler, Loader2,
+    Rocket, Save, Check, Lock, ChevronUp, ChevronDown, CircleAlert, Info, Circle,
+} from 'lucide-react';
 import { calculateDetailedCost, formatIndianCurrency, crossValidateAnalysis } from '../services/engineeringDB';
 import { saveProject } from '../services/api';
 
@@ -77,8 +82,9 @@ function AiFloorPlanImage({ specs, analysis }) {
         style={{ width: '100%', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}
         onError={(e) => { e.target.style.display = 'none'; }}
       />
-      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', textAlign: 'center' }}>
-        🤖 AI-generated conceptual floor plan — for visualization only, not to scale
+      <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '8px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+        <Info size={14} />
+        AI-generated conceptual floor plan — for visualization only, not to scale
       </p>
     </div>
   );
@@ -170,11 +176,15 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
             <div className="blueprint-header">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
-                        <div className="welcome-badge" style={{ marginBottom: '12px' }}>⚙️ Engineering Report</div>
+                        <div className="welcome-badge" style={{ marginBottom: '12px' }}>
+                            <Settings size={14} />
+                            Engineering Report
+                        </div>
                         <h1>Comprehensive Construction Blueprint</h1>
                     </div>
                     <button className="btn btn-secondary btn-sm" onClick={() => window.print()}>
-                        🖨️ Download / Print Report
+                        <Printer size={14} />
+                        Download / Print Report
                     </button>
                 </div>
                 <p className="specs-summary">
@@ -185,12 +195,20 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
             {/* ─── Disclaimer ─── */}
             {analysis._isMockFallback && (
                 <div className="mock-fallback-banner">
-                    <strong>⚠️ Demo data:</strong> The Gemini API quota was exceeded or unavailable.
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <AlertTriangle size={14} />
+                        Demo data:
+                    </strong>{' '}
+                    The Gemini API quota was exceeded or unavailable.
                     This report uses sample engineering data — not a real AI analysis. Retry later with a valid API key.
                 </div>
             )}
             <div className="disclaimer-banner">
-                <strong>⚠️ Important Disclaimer:</strong> This report is AI-generated and cross-validated against IS 456/ACI 318 standards.
+                <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <AlertTriangle size={14} />
+                    Important Disclaimer:
+                </strong>{' '}
+                This report is AI-generated and cross-validated against IS 456/ACI 318 standards.
                 While calculations follow engineering rules, always consult a licensed structural engineer before actual construction.
                 Material costs are estimates based on average 2026 market rates — verify locally.
             </div>
@@ -199,14 +217,25 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
             {allWarnings.length > 0 && (
                 <div className="safety-panel">
                     <div className="safety-panel-header" onClick={() => toggleSection('safety')}>
-                        <h3>🛡️ Safety Warnings & Validation ({allWarnings.length})</h3>
-                        <span className="toggle-icon">{activeSection === 'safety' ? '▲' : '▼'}</span>
+                        <h3>
+                            <Shield size={14} />
+                            Safety Warnings & Validation ({allWarnings.length})
+                        </h3>
+                        <span className="toggle-icon">
+                            {activeSection === 'safety' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </span>
                     </div>
                     <div className={`safety-panel-body ${activeSection === 'safety' || activeSection === null ? 'open' : ''}`}>
                         {allWarnings.map((w, i) => (
                             <div key={i} className={`safety-item severity-${w.severity}`}>
                                 <span className="safety-icon">
-                                    {w.severity === 'critical' ? '🔴' : w.severity === 'warning' ? '🟡' : 'ℹ️'}
+                                    {w.severity === 'critical' ? (
+                                        <Circle size={14} className="safety-severity-critical" fill="currentColor" />
+                                    ) : w.severity === 'warning' ? (
+                                        <AlertTriangle size={14} />
+                                    ) : (
+                                        <Info size={14} />
+                                    )}
                                 </span>
                                 <span>{w.message}</span>
                             </div>
@@ -217,7 +246,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
             {/* ─── Site Location Info ─── */}
             {siteLocation && (
                 <div className="location-info-banner">
-                    <span className="location-info-icon">📍</span>
+                    <span className="location-info-icon"><MapPin size={18} /></span>
                     <div>
                         <strong>Site Location:</strong> {siteLocation.address}
                         {siteLocation.region && <span className="location-region-badge">{siteLocation.region}</span>}
@@ -230,7 +259,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Site & Soil Analysis ─── */}
                 <div className="glass-card blueprint-card">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon blue">🌍</div>
+                        <div className="blueprint-card-icon blue"><Globe size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Site & Soil Analysis</div>
                             <div className="blueprint-card-subtitle">AI Terrain Assessment</div>
@@ -244,7 +273,12 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                     </div>
                     {siteAssessment.safetyConcerns?.length > 0 && (
                         <div className="mini-safety-list">
-                            {siteAssessment.safetyConcerns.map((s, i) => <div key={i} className="safety-tag">⚠️ {s}</div>)}
+                            {siteAssessment.safetyConcerns.map((s, i) => (
+                                <div key={i} className="safety-tag">
+                                    <AlertTriangle size={14} />
+                                    {s}
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>
@@ -252,7 +286,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Foundation Engineering ─── */}
                 <div className="glass-card blueprint-card">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon amber">🏗️</div>
+                        <div className="blueprint-card-icon amber"><Building2 size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Foundation Engineering</div>
                             <div className="blueprint-card-subtitle">{foundationEngineering.recommendedType}</div>
@@ -280,7 +314,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Concrete Mix Design ─── */}
                 <div className="glass-card blueprint-card">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon emerald">🧪</div>
+                        <div className="blueprint-card-icon emerald"><FlaskConical size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Concrete Mix Design</div>
                             <div className="blueprint-card-subtitle">Grade {concreteMixDesign.targetGrade}</div>
@@ -294,14 +328,17 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                         <h4>Mixing Procedure (Beginners)</h4>
                         <p>{concreteMixDesign.mixingInstructions}</p>
                         <h4>Curing Process</h4>
-                        <p>💧 {concreteMixDesign.curingProcess}</p>
+                        <p className="inline-icon-text">
+                            <Info size={14} />
+                            {concreteMixDesign.curingProcess}
+                        </p>
                     </div>
                 </div>
 
                 {/* ─── Wiring & Electrical ─── */}
                 <div className="glass-card blueprint-card">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon purple">⚡</div>
+                        <div className="blueprint-card-icon purple"><Zap size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Wiring & Electrical</div>
                             <div className="blueprint-card-subtitle">Layout & Safety</div>
@@ -313,7 +350,8 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                         <h4>Estimated Points</h4>
                         <p>{wiringAndElectrical.estimatedPoints}</p>
                         <div className="safety-note">
-                            🛡️ <strong>Safety:</strong> {wiringAndElectrical.safetyProtocols}
+                            <Shield size={14} />
+                            <span><strong>Safety:</strong> {wiringAndElectrical.safetyProtocols}</span>
                         </div>
                     </div>
                 </div>
@@ -321,7 +359,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Floor Plan SVG ─── */}
                 <div className="glass-card blueprint-card blueprint-full-width">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon blue">📏</div>
+                        <div className="blueprint-card-icon blue"><Ruler size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Building Footprint</div>
                             <div className="blueprint-card-subtitle">Scale diagram of {specs.length}×{specs.width} {specs.unit}</div>
@@ -331,7 +369,10 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
 
                     {/* AI Floor Plan */}
                     <div style={{ marginTop: '16px' }}>
-                        <h4 style={{ fontSize: '0.9rem', color: 'var(--accent-blue)', marginBottom: '12px' }}>🤖 AI-Generated Floor Plan</h4>
+                        <h4 className="ai-floorplan-heading">
+                            <Info size={14} />
+                            AI-Generated Floor Plan
+                        </h4>
                         <AiFloorPlanImage specs={specs} analysis={analysis} />
                     </div>
                 </div>
@@ -340,7 +381,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {costData && (
                     <div className="glass-card blueprint-card blueprint-full-width">
                         <div className="blueprint-card-header">
-                            <div className="blueprint-card-icon amber">💰</div>
+                            <div className="blueprint-card-icon amber"><IndianRupee size={20} /></div>
                             <div>
                                 <div className="blueprint-card-title">Detailed Cost Breakdown</div>
                                 <div className="blueprint-card-subtitle">Based on 2026 market rates (INR)</div>
@@ -377,8 +418,11 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                             </table>
                         </div>
                         <div className="cost-note">
-                            💡 <strong>Note:</strong> Prices are approximate 2026 market rates. Actual costs may vary 15-25% based on location,
-                            transport, brand, and seasonal fluctuations. Always get local quotations before purchasing.
+                            <Info size={14} />
+                            <span>
+                                <strong>Note:</strong> Prices are approximate 2026 market rates. Actual costs may vary 15-25% based on location,
+                                transport, brand, and seasonal fluctuations. Always get local quotations before purchasing.
+                            </span>
                         </div>
                     </div>
                 )}
@@ -386,7 +430,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Material Summary Cards ─── */}
                 <div className="glass-card blueprint-card blueprint-full-width">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon emerald">📦</div>
+                        <div className="blueprint-card-icon emerald"><Building size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Material Quantities Summary</div>
                             <div className="blueprint-card-subtitle">Calculated from engineering formulas</div>
@@ -416,7 +460,8 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                     </div>
                     {materialEstimateSummary.currentMarketRateNotes && (
                         <div className="market-note">
-                            💡 <strong>AI Market Note:</strong> {materialEstimateSummary.currentMarketRateNotes}
+                            <Info size={14} />
+                            <span><strong>AI Market Note:</strong> {materialEstimateSummary.currentMarketRateNotes}</span>
                         </div>
                     )}
                 </div>
@@ -424,7 +469,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Step-by-Step Construction Guide ─── */}
                 <div className="glass-card blueprint-card blueprint-full-width">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon amber">📋</div>
+                        <div className="blueprint-card-icon amber"><ClipboardList size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Construction Roadmap</div>
                             <div className="blueprint-card-subtitle">Phase-wise execution guide for beginners</div>
@@ -440,7 +485,12 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                                 <ul className="phase-steps">
                                     {phase.steps.map((s, i) => <li key={i}>{s}</li>)}
                                 </ul>
-                                {phase.safetyWarning && <div className="phase-safety">⚠️ {phase.safetyWarning}</div>}
+                                {phase.safetyWarning && (
+                                    <div className="phase-safety">
+                                        <AlertTriangle size={14} />
+                                        {phase.safetyWarning}
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -450,7 +500,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {blueprintImage && (
                     <div className="glass-card blueprint-card blueprint-full-width">
                         <div className="blueprint-card-header">
-                            <div className="blueprint-card-icon emerald">🏙️</div>
+                            <div className="blueprint-card-icon emerald"><Building size={20} /></div>
                             <div>
                                 <div className="blueprint-card-title">AI Architectural Visualization</div>
                                 <div className="blueprint-card-subtitle">3D rendering of your project vision</div>
@@ -466,7 +516,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Engineering Formulas ─── */}
                 <div className="glass-card blueprint-card blueprint-full-width">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon blue">📐</div>
+                        <div className="blueprint-card-icon blue"><Ruler size={18} /></div>
                         <div>
                             <div className="blueprint-card-title">Engineering Formulas & Calculations</div>
                             <div className="blueprint-card-subtitle">Mathematical grounding (IS 456 / ACI 318)</div>
@@ -483,10 +533,13 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                     {/* Local calculator formulas */}
                     {estimate?.foundation?.formulas && (
                         <div className="formula-list" style={{ marginTop: '16px' }}>
-                            <div className="formula-section-label">📊 Verified Calculator Formulas</div>
+                            <div className="formula-section-label">
+                                <ClipboardList size={14} />
+                                Verified Calculator Formulas
+                            </div>
                             {Object.values(estimate.foundation.formulas).map((f, i) => (
                                 <div key={`calc-${i}`} className="formula-card verified">
-                                    <div className="formula-num">✓</div>
+                                    <div className="formula-num"><Check size={14} /></div>
                                     <div className="formula-text">{f}</div>
                                 </div>
                             ))}
@@ -497,7 +550,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 {/* ─── Refinement Loop ─── */}
                 <div className="glass-card blueprint-card blueprint-full-width refinement-card">
                     <div className="blueprint-card-header">
-                        <div className="blueprint-card-icon purple">💬</div>
+                        <div className="blueprint-card-icon purple"><CircleAlert size={20} /></div>
                         <div>
                             <div className="blueprint-card-title">Request Changes or Ask Questions</div>
                             <div className="blueprint-card-subtitle">Talk to your AI Structural Engineer</div>
@@ -514,22 +567,58 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                             disabled={isRefining || !feedback.trim()}
                             onClick={handleRefineSubmit}
                         >
-                            {isRefining ? '🔄 Analyzing...' : '🚀 Send Request'}
+                            {isRefining ? (
+                                <>
+                                    <Loader2 size={14} className="spin" />
+                                    Analyzing...
+                                </>
+                            ) : (
+                                <>
+                                    <Rocket size={14} />
+                                    Send Request
+                                </>
+                            )}
                         </button>
                     </div>
                 </div>
 
                 {/* ─── Actions ─── */}
                 <div className="blueprint-actions">
-                    <button className="btn btn-secondary btn-large" onClick={() => window.print()}>🖨️ Print Report</button>
+                    <button className="btn btn-secondary btn-large" onClick={() => window.print()}>
+                        <Printer size={14} />
+                        Print Report
+                    </button>
                     <button
                         className="btn btn-secondary btn-large"
                         onClick={handleSaveProject}
                         disabled={saveState === 'saving' || saveState === 'saved'}
                     >
-                        {saveState === 'saving' ? '💾 Saving...' : saveState === 'saved' ? '✅ Saved' : user ? '💾 Save Project' : '🔐 Sign in to Save'}
+                        {saveState === 'saving' ? (
+                            <>
+                                <Save size={14} />
+                                Saving...
+                            </>
+                        ) : saveState === 'saved' ? (
+                            <>
+                                <Check size={14} />
+                                Saved
+                            </>
+                        ) : user ? (
+                            <>
+                                <Save size={14} />
+                                Save Project
+                            </>
+                        ) : (
+                            <>
+                                <Lock size={14} />
+                                Sign in to Save
+                            </>
+                        )}
                     </button>
-                    <button className="btn btn-primary btn-large" onClick={onNewProject}>🆕 Start New Project</button>
+                    <button className="btn btn-primary btn-large" onClick={onNewProject}>
+                        <Rocket size={14} />
+                        Start New Project
+                    </button>
                 </div>
                 {saveError && <p className="field-error" style={{ textAlign: 'center', marginTop: '12px' }}>{saveError}</p>}
             </div>
@@ -556,8 +645,8 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                     display: flex; justify-content: space-between; align-items: center;
                     padding: 16px 20px; cursor: pointer; background: rgba(239,68,68,0.05);
                 }
-                .safety-panel-header h3 { margin: 0; font-size: 1rem; color: #ef4444; }
-                .toggle-icon { color: var(--text-secondary); font-size: 0.8rem; }
+                .safety-panel-header h3 { margin: 0; font-size: 1rem; color: #ef4444; display: flex; align-items: center; gap: 8px; }
+                .toggle-icon { color: var(--text-secondary); display: flex; align-items: center; }
                 .safety-panel-body { display: none; padding: 16px 20px; }
                 .safety-panel-body.open { display: block; }
                 .safety-item {
@@ -568,14 +657,15 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 .safety-item.severity-critical { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
                 .safety-item.severity-warning { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); }
                 .safety-item.severity-info { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); }
-                .safety-icon { font-size: 1rem; min-width: 20px; }
+                .safety-icon { display: flex; align-items: center; min-width: 20px; flex-shrink: 0; }
+                .safety-severity-critical { color: #ef4444; }
 
                 /* Blueprint Cards */
                 .blueprint-card { padding: 24px; }
                 .blueprint-card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
                 .blueprint-card-icon {
                     width: 44px; height: 44px; border-radius: 12px;
-                    display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+                    display: flex; align-items: center; justify-content: center;
                 }
                 .blueprint-card-icon.blue { background: var(--accent-blue-glow); }
                 .blueprint-card-icon.amber { background: var(--accent-amber-dim); }
@@ -592,8 +682,19 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 .report-section p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
 
                 .mini-safety-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-                .safety-tag { font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2); }
-                .safety-note { margin-top: 12px; padding: 10px; background: rgba(16,185,129,0.05); border-radius: 8px; font-size: 0.8rem; color: var(--accent-emerald); }
+                .safety-tag {
+                    display: inline-flex; align-items: center; gap: 4px;
+                    font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(239, 68, 68, 0.2);
+                }
+                .safety-note {
+                    display: flex; align-items: flex-start; gap: 8px;
+                    margin-top: 12px; padding: 10px; background: rgba(16,185,129,0.05); border-radius: 8px; font-size: 0.8rem; color: var(--accent-emerald);
+                }
+                .inline-icon-text { display: flex; align-items: flex-start; gap: 6px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+                .ai-floorplan-heading {
+                    display: flex; align-items: center; gap: 6px;
+                    font-size: 0.9rem; color: var(--accent-blue); margin-bottom: 12px;
+                }
 
                 .formula-block { background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px; margin-top: 12px; font-family: monospace; font-size: 0.8rem; color: var(--accent-blue); }
 
@@ -605,8 +706,14 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 .cost-amount { font-weight: 600; color: var(--accent-emerald); }
                 .cost-total-row { background: rgba(245,158,11,0.08); }
                 .cost-total { font-weight: 800; font-size: 1.1rem; color: var(--accent-amber); }
-                .cost-note { margin-top: 16px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; }
-                .market-note { margin-top: 16px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+                .cost-note {
+                    display: flex; align-items: flex-start; gap: 8px;
+                    margin-top: 16px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;
+                }
+                .market-note {
+                    display: flex; align-items: flex-start; gap: 8px;
+                    margin-top: 16px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px;
+                }
 
                 /* Estimate Grid */
                 .estimate-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
@@ -621,7 +728,10 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                 .phase-header h4 { margin: 0 0 8px; font-size: 1rem; color: var(--accent-amber); }
                 .phase-steps { padding-left: 20px; margin: 0; font-size: 0.85rem; color: var(--text-secondary); }
                 .phase-steps li { margin-bottom: 4px; line-height: 1.5; }
-                .phase-safety { margin-top: 8px; font-size: 0.8rem; color: #ef4444; background: rgba(239,68,68,0.05); padding: 6px 10px; border-radius: 4px; }
+                .phase-safety {
+                    display: flex; align-items: flex-start; gap: 6px;
+                    margin-top: 8px; font-size: 0.8rem; color: #ef4444; background: rgba(239,68,68,0.05); padding: 6px 10px; border-radius: 4px;
+                }
 
                 /* AI Image */
                 .blueprint-image-wrap { margin: 16px 0; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
@@ -630,7 +740,10 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
 
                 /* Formulas */
                 .formula-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-                .formula-section-label { font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); margin-bottom: 4px; }
+                .formula-section-label {
+                    display: flex; align-items: center; gap: 6px;
+                    font-size: 0.8rem; font-weight: 700; color: var(--accent-emerald); margin-bottom: 4px;
+                }
                 .formula-card {
                     display: flex; align-items: flex-start; gap: 12px;
                     padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px;
@@ -686,7 +799,7 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
                     margin-bottom: 24px;
                     font-size: 0.85rem;
                 }
-                .location-info-icon { font-size: 1.3rem; }
+                .location-info-icon { display: flex; align-items: center; flex-shrink: 0; color: var(--accent-emerald); }
                 .location-region-badge {
                     display: inline-block;
                     margin-left: 8px;

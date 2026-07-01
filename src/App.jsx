@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import Header from './components/Header';
 import ApiKeyModal from './components/ApiKeyModal';
 import PhotoUpload from './components/PhotoUpload';
@@ -315,11 +316,12 @@ export default function App() {
 
           {error && (
             <div className="error-container">
-              <div className="error-icon">❌</div>
+              <div className="error-icon"><AlertCircle size={28} /></div>
               <div className="error-title">Analysis Failed</div>
               <div className="error-message">{error}</div>
               {error.toLowerCase().includes('key') && (
                 <button
+                  type="button"
                   className="btn btn-secondary btn-sm"
                   style={{ marginTop: '12px' }}
                   onClick={() => {
@@ -329,7 +331,7 @@ export default function App() {
                     setError(null);
                   }}
                 >
-                  🔄 Reset API Key
+                  <RefreshCw size={14} /> Reset API Key
                 </button>
               )}
             </div>

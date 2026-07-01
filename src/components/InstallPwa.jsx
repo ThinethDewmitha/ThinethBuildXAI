@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Smartphone } from 'lucide-react';
 
 function isIos() {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -55,7 +56,9 @@ export default function InstallPwa() {
   return (
     <div className="pwa-install-banner" role="region" aria-label="Install app">
       <div className="pwa-install-inner">
-        <div className="pwa-install-icon" aria-hidden="true">📲</div>
+        <div className="pwa-install-icon" aria-hidden="true">
+          <Smartphone size={22} />
+        </div>
         <div className="pwa-install-copy">
           <strong>Install BuildX AI</strong>
           {showIosHint && !deferredPrompt ? (

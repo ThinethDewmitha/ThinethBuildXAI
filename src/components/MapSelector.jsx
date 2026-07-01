@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { MapPin, Search, Loader2, Check, ArrowLeft, Globe } from 'lucide-react';
 
 /**
  * MapSelector – Interactive Leaflet map for selecting construction site location.
@@ -149,7 +150,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
     return (
         <div className="map-selector-container animate-in">
             <div className="map-header">
-                <div className="welcome-badge">📍 Step 1 of 4</div>
+                <div className="welcome-badge"><MapPin size={14} /> Step 1 of 4</div>
                 <h2>Select Your Construction Site</h2>
                 <p>Click on the map or search for a location to mark where you want to build. This helps us give accurate soil, climate, and regional recommendations.</p>
             </div>
@@ -159,12 +160,12 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                 <input
                     type="text"
                     className="form-input"
-                    placeholder="🔍 Search a location (e.g., 'Chennai, India' or an address)"
+                    placeholder="Search a location (e.g., Chennai, India or an address)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <button type="submit" className="btn btn-primary" disabled={searching}>
-                    {searching ? '⏳' : '🔍 Search'}
+                    {searching ? <Loader2 size={16} className="spin" /> : <><Search size={16} /> Search</>}
                 </button>
             </form>
 
@@ -176,7 +177,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                 {location && (
                     <div className="map-location-card glass-card">
                         <div className="location-card-header">
-                            <span className="location-pin-icon">📍</span>
+                            <span className="location-pin-icon"><MapPin size={18} /></span>
                             <div>
                                 <div className="location-title">Selected Location</div>
                                 <div className="location-coords">{location.lat}, {location.lng}</div>
@@ -184,7 +185,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                         </div>
                         <div className="location-address">{location.address}</div>
                         {location.region && (
-                            <div className="location-region">🌍 Region: {location.region}</div>
+                            <div className="location-region"><Globe size={14} /> Region: {location.region}</div>
                         )}
                     </div>
                 )}
@@ -200,7 +201,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
             {/* Actions */}
             <div className="map-actions">
                 {onBack && (
-                    <button className="btn btn-secondary" onClick={onBack}>← Back</button>
+                    <button type="button" className="btn btn-secondary" onClick={onBack}><ArrowLeft size={16} /> Back</button>
                 )}
                 <button className="btn btn-secondary" onClick={handleSkip}>
                     Skip — I'll enter manually
@@ -210,7 +211,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                     disabled={!location}
                     onClick={handleConfirm}
                 >
-                    ✅ Confirm Location & Continue
+                    <Check size={16} /> Confirm Location & Continue
                 </button>
             </div>
         </div>

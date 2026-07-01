@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Users, UserCheck, FolderOpen, Building2, BarChart3, AlertCircle,
+  Eye, Ban, Check, Trash2, Ruler, IndianRupee, ArrowLeft,
+} from 'lucide-react';
+import {
     getAdminStats, getAdminUsers, getAdminProjects,
     updateAdminUser, deleteAdminUser, updateAdminProject, deleteAdminProject,
     getAdminUser
@@ -82,7 +86,7 @@ export default function AdminDashboard({ onBack }) {
         <div className="admin-container animate-in">
             <div className="admin-top-bar">
                 <div>
-                    <button className="btn btn-secondary" onClick={onBack}>← Back to App</button>
+                    <button type="button" className="btn btn-secondary" onClick={onBack}><ArrowLeft size={16} /> Back to App</button>
                     <h2>Admin Dashboard</h2>
                     <p>Manage users, projects, and monitor activity</p>
                 </div>
@@ -90,22 +94,26 @@ export default function AdminDashboard({ onBack }) {
 
             {/* Tabs */}
             <div className="admin-tabs">
-                {[['overview', '📊 Overview'], ['users', '👥 Users'], ['projects', '📁 Projects']].map(([key, label]) => (
-                    <button key={key} className={`admin-tab ${tab === key ? 'active' : ''}`} onClick={() => { setTab(key); setSelectedUser(null); setSelectedProject(null); }}>
-                        {label}
+                {[
+                  ['overview', BarChart3, 'Overview'],
+                  ['users', Users, 'Users'],
+                  ['projects', FolderOpen, 'Projects'],
+                ].map(([key, Icon, label]) => (
+                    <button key={key} type="button" className={`admin-tab ${tab === key ? 'active' : ''}`} onClick={() => { setTab(key); setSelectedUser(null); setSelectedProject(null); }}>
+                        <Icon size={16} /> {label}
                     </button>
                 ))}
             </div>
 
-            {error && <div className="admin-error">❌ {error}</div>}
+            {error && <div className="admin-error"><AlertCircle size={16} /> {error}</div>}
 
             {/* Overview Tab */}
             {tab === 'overview' && stats && (
                 <div className="admin-stats-grid">
-                    <div className="glass-card stat-card"><div className="stat-icon blue">👥</div><div className="stat-val">{stats.totalUsers}</div><div className="stat-label">Total Users</div></div>
-                    <div className="glass-card stat-card"><div className="stat-icon green">✅</div><div className="stat-val">{stats.activeUsers}</div><div className="stat-label">Active Users</div></div>
-                    <div className="glass-card stat-card"><div className="stat-icon amber">📁</div><div className="stat-val">{stats.totalProjects}</div><div className="stat-label">Total Projects</div></div>
-                    <div className="glass-card stat-card"><div className="stat-icon purple">🏗️</div><div className="stat-val">{stats.completedProjects}</div><div className="stat-label">Completed</div></div>
+                    <div className="glass-card stat-card"><div className="stat-icon blue"><Users size={20} /></div><div className="stat-val">{stats.totalUsers}</div><div className="stat-label">Total Users</div></div>
+                    <div className="glass-card stat-card"><div className="stat-icon green"><UserCheck size={20} /></div><div className="stat-val">{stats.activeUsers}</div><div className="stat-label">Active Users</div></div>
+                    <div className="glass-card stat-card"><div className="stat-icon amber"><FolderOpen size={20} /></div><div className="stat-val">{stats.totalProjects}</div><div className="stat-label">Total Projects</div></div>
+                    <div className="glass-card stat-card"><div className="stat-icon purple"><Building2 size={20} /></div><div className="stat-val">{stats.completedProjects}</div><div className="stat-label">Completed</div></div>
                 </div>
             )}
 
@@ -144,11 +152,11 @@ export default function AdminDashboard({ onBack }) {
                                         </td>
                                         <td>
                                             <div className="action-buttons">
-                                                <button className="btn-mini" onClick={() => viewUserDetails(u.id)}>👁️</button>
-                                                <button className="btn-mini" onClick={() => handleToggleUserStatus(u.id, u.status)}>
-                                                    {u.status === 'active' ? '🚫' : '✅'}
+                                                <button type="button" className="btn-mini" onClick={() => viewUserDetails(u.id)} aria-label="View user"><Eye size={14} /></button>
+                                                <button type="button" className="btn-mini" onClick={() => handleToggleUserStatus(u.id, u.status)} aria-label="Toggle status">
+                                                    {u.status === 'active' ? <Ban size={14} /> : <Check size={14} />}
                                                 </button>
-                                                {!u.isAdmin && <button className="btn-mini danger" onClick={() => handleDeleteUser(u.id)}>🗑️</button>}
+                                                {!u.isAdmin && <button type="button" className="btn-mini danger" onClick={() => handleDeleteUser(u.id)} aria-label="Delete user"><Trash2 size={14} /></button>}
                                             </div>
                                         </td>
                                     </tr>
@@ -237,8 +245,8 @@ export default function AdminDashboard({ onBack }) {
                                         </td>
                                         <td>
                                             <div className="action-buttons">
-                                                <button className="btn-mini" onClick={() => setSelectedProject(p)}>👁️</button>
-                                                <button className="btn-mini danger" onClick={() => handleDeleteProject(p.id)}>🗑️</button>
+                                                <button type="button" className="btn-mini" onClick={() => setSelectedProject(p)} aria-label="View project"><Eye size={14} /></button>
+                                                <button type="button" className="btn-mini danger" onClick={() => handleDeleteProject(p.id)} aria-label="Delete project"><Trash2 size={14} /></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -262,7 +270,7 @@ export default function AdminDashboard({ onBack }) {
                         <div className="project-detail-body">
                             {/* Specs */}
                             <div className="detail-section">
-                                <h4>📐 Building Specifications</h4>
+                                <h4><Ruler size={16} /> Building Specifications</h4>
                                 <div className="detail-grid">
                                     <div className="detail-item"><span className="detail-label">Dimensions</span><span>{selectedProject.specs?.length}×{selectedProject.specs?.width} {selectedProject.specs?.unit}</span></div>
                                     <div className="detail-item"><span className="detail-label">Height</span><span>{selectedProject.specs?.totalHeight} {selectedProject.specs?.unit}</span></div>
@@ -306,7 +314,7 @@ export default function AdminDashboard({ onBack }) {
                             {/* Estimate Summary */}
                             {selectedProject.estimate && selectedProject.estimate.summary && (
                                 <div className="detail-section">
-                                    <h4>💰 Material Estimate</h4>
+                                    <h4><IndianRupee size={16} /> Material Estimate</h4>
                                     <div className="detail-grid">
                                         <div className="detail-item"><span className="detail-label">Cement</span><span>{selectedProject.estimate.summary.cementBags} bags</span></div>
                                         <div className="detail-item"><span className="detail-label">Sand</span><span>{selectedProject.estimate.summary.sandCft} cft</span></div>

@@ -1,4 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
+import {
+  Home, BrickWall, Mountain, Droplets, Building2, Warehouse, Car, Layers, Fence,
+  Info, Zap, Pencil,
+} from 'lucide-react';
+
+const TYPE_ICONS = {
+  residential_house: Home,
+  compound_wall: BrickWall,
+  retaining_wall: Mountain,
+  water_tank: Droplets,
+  commercial_building: Building2,
+  warehouse: Warehouse,
+  garage: Car,
+  multi_story: Layers,
+  boundary_fence: Fence,
+};
 
 /**
  * Building type definitions with presets for each type
@@ -6,7 +22,7 @@ import React, { useState, useRef, useEffect } from 'react';
 const BUILDING_TYPES = [
     {
         id: 'residential_house',
-        label: '🏠 Residential House',
+        label: 'Residential House',
         description: 'Standard home (1BHK, 2BHK, 3BHK, villa)',
         presets: [
             { label: 'Small 1BHK (20×25ft)', length: 20, width: 25, height: 10, floors: 1, wall: 'brick', thickness: 230, desc: 'Small single-bedroom house with hall and kitchen' },
@@ -17,7 +33,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'compound_wall',
-        label: '🧱 Compound / Boundary Wall',
+        label: 'Compound / Boundary Wall',
         description: 'Boundary wall, garden wall, compound fence',
         presets: [
             { label: 'Small Compound (40ft × 4ft)', length: 40, width: 0.75, height: 4, floors: 1, wall: 'brick', thickness: 230, desc: 'Boundary wall for small plot, 4 feet height with pillars every 10ft' },
@@ -27,7 +43,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'retaining_wall',
-        label: '🏔️ Retaining Wall',
+        label: 'Retaining Wall',
         description: 'Wall to hold back earth or soil',
         presets: [
             { label: 'Garden Retaining (20ft × 4ft)', length: 20, width: 1.5, height: 4, floors: 1, wall: 'stone', thickness: 450, desc: 'Small garden retaining wall for slope management' },
@@ -36,7 +52,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'water_tank',
-        label: '💧 Water Tank / Reservoir',
+        label: 'Water Tank / Reservoir',
         description: 'Underground, overhead or ground-level tank',
         presets: [
             { label: 'Small Tank (8×8×6ft)', length: 8, width: 8, height: 6, floors: 1, wall: 'concrete_block', thickness: 200, desc: 'Underground water storage tank for residential use, 2500 liters capacity' },
@@ -46,7 +62,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'commercial_building',
-        label: '🏢 Commercial Building',
+        label: 'Commercial Building',
         description: 'Shop, office, showroom',
         presets: [
             { label: 'Small Shop (15×20ft)', length: 15, width: 20, height: 12, floors: 1, wall: 'concrete_block', thickness: 200, desc: 'Single-story shop/showroom with roller shutter' },
@@ -55,7 +71,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'warehouse',
-        label: '🏭 Warehouse / Shed',
+        label: 'Warehouse / Shed',
         description: 'Storage, industrial shed, factory',
         presets: [
             { label: 'Small Godown (30×40ft)', length: 30, width: 40, height: 15, floors: 1, wall: 'concrete_block', thickness: 200, desc: 'Single-story storage godown with loading area' },
@@ -64,7 +80,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'garage',
-        label: '🚗 Garage / Parking',
+        label: 'Garage / Parking',
         description: 'Car parking, covered shed',
         presets: [
             { label: 'Single Car (12×20ft)', length: 12, width: 20, height: 10, floors: 1, wall: 'brick', thickness: 115, desc: 'Single car garage with roller door' },
@@ -73,7 +89,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'multi_story',
-        label: '🏗️ Multi-Story (3+ Floors)',
+        label: 'Multi-Story (3+ Floors)',
         description: 'Apartment, multi-family building',
         presets: [
             { label: '3-Floor Apartment (40×50ft)', length: 40, width: 50, height: 30, floors: 3, wall: 'concrete_block', thickness: 200, desc: 'Three-floor apartment building with 6 units' },
@@ -82,7 +98,7 @@ const BUILDING_TYPES = [
     },
     {
         id: 'boundary_fence',
-        label: '🏗️ Fence / Pillar Structure',
+        label: 'Fence / Pillar Structure',
         description: 'Pillar fence, gate pillars',
         presets: [
             { label: 'Front Gate Pillars (10ft × 8ft)', length: 10, width: 2, height: 8, floors: 1, wall: 'brick', thickness: 350, desc: 'Two entrance gate pillars with arch design' },
@@ -108,7 +124,7 @@ function Tooltip({ text }) {
     const [show, setShow] = useState(false);
     return (
         <span className="tooltip-trigger" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)} onClick={() => setShow(!show)}>
-            ℹ️
+            <Info size={14} />
             {show && <span className="tooltip-popup">{text}</span>}
         </span>
     );
@@ -203,23 +219,28 @@ export default function SpecForm({ onSubmit, onBack }) {
                     What do you want to build? <Tooltip text="Select the type of structure. This helps the AI give specific engineering advice for your project type." />
                 </label>
                 <div className="building-type-grid">
-                    {BUILDING_TYPES.map(type => (
+                    {BUILDING_TYPES.map(type => {
+                        const TypeIcon = TYPE_ICONS[type.id];
+                        return (
                         <button
                             key={type.id}
+                            type="button"
                             className={`building-type-btn ${specs.buildingType === type.id ? 'active' : ''}`}
                             onClick={() => { update('buildingType', type.id); setShowPresets(true); }}
                         >
+                            {TypeIcon && <span className="bt-icon"><TypeIcon size={18} /></span>}
                             <span className="bt-label">{type.label}</span>
                             <span className="bt-desc">{type.description}</span>
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Common Presets */}
             {showPresets && selectedType.presets && (
                 <div className="form-group">
-                    <label className="form-label">⚡ Quick Start — Common Sizes</label>
+                    <label className="form-label"><Zap size={14} /> Quick Start — Common Sizes</label>
                     <div className="presets-grid">
                         {selectedType.presets.map((preset, i) => (
                             <button
@@ -232,7 +253,7 @@ export default function SpecForm({ onSubmit, onBack }) {
                             </button>
                         ))}
                         <button className="preset-btn preset-custom" onClick={() => setShowPresets(false)}>
-                            <span className="preset-label">✏️ Custom Size</span>
+                            <span className="preset-label"><Pencil size={14} /> Custom Size</span>
                             <span className="preset-desc">Enter your own dimensions</span>
                         </button>
                     </div>
@@ -343,9 +364,9 @@ export default function SpecForm({ onSubmit, onBack }) {
                     value={specs.wallType}
                     onChange={(e) => update('wallType', e.target.value)}
                 >
-                    <option value="brick">🧱 Brick Wall</option>
-                    <option value="concrete_block">🏗️ Concrete Block</option>
-                    <option value="stone">🪨 Stone Wall</option>
+                    <option value="brick">Brick Wall</option>
+                    <option value="concrete_block">Concrete Block</option>
+                    <option value="stone">Stone Wall</option>
                 </select>
             </div>
 

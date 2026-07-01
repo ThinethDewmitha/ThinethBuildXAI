@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Search, CheckCircle2, AlertTriangle, Loader2, Zap } from 'lucide-react';
 
 /**
  * Context-aware questions per building type when details are insufficient
@@ -176,7 +177,7 @@ export default function SpecValidator({ specs, photos, onProceed, onBack, onCanc
             <div className="glass-card validator-card">
                 <div className="validator-header">
                     <div className="validator-icon">
-                        {status === 'checking' ? '🔍' : status === 'ready' ? '✅' : '⚠️'}
+                        {status === 'checking' ? <Loader2 size={28} className="spin" /> : status === 'ready' ? <CheckCircle2 size={28} /> : <AlertTriangle size={28} />}
                     </div>
                     <h2>
                         {status === 'checking' ? 'Validating Your Specs...' :
@@ -201,7 +202,7 @@ export default function SpecValidator({ specs, photos, onProceed, onBack, onCanc
                     <div className="missing-items-list">
                         {/* Critical items first */}
                         {criticalCount > 0 && (
-                            <div className="section-label critical-label">🔴 Required ({criticalCount})</div>
+                            <div className="section-label critical-label">Required ({criticalCount})</div>
                         )}
                         {missingItems.filter(i => i.critical).map((item, i) => (
                             <div key={item.id || i} className="missing-item missing-critical">
@@ -227,7 +228,7 @@ export default function SpecValidator({ specs, photos, onProceed, onBack, onCanc
 
                         {/* Optional / additional info items */}
                         {optionalCount > 0 && (
-                            <div className="section-label optional-label">💡 Recommended — Answer for better results ({optionalCount})</div>
+                            <div className="section-label optional-label">Recommended — Answer for better results ({optionalCount})</div>
                         )}
                         {missingItems.filter(i => !i.critical).map((item, i) => (
                             <div key={item.id || `opt-${i}`} className="missing-item missing-optional">
@@ -258,7 +259,7 @@ export default function SpecValidator({ specs, photos, onProceed, onBack, onCanc
                                 ← Go Back & Fix
                             </button>
                             <button className="btn btn-secondary" onClick={handleSkip}>
-                                Skip Optional & Continue ⚡
+                                Skip Optional & Continue <Zap size={14} />
                             </button>
                             <button className="btn btn-primary" onClick={handleFixAndContinue}>
                                 Continue with Analysis →
