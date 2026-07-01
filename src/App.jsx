@@ -15,6 +15,7 @@ import { getFirebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
 import InstallPwa from './components/InstallPwa';
+import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number';
 
 
 const PHASES = {
@@ -286,7 +287,7 @@ export default function App() {
 
                 <div className="welcome-stats">
                   <div className="welcome-stat">
-                    <strong>4</strong>
+                    <strong><SlidingNumber number={4} inView /></strong>
                     <span>Site Photos</span>
                   </div>
                   <div className="welcome-stat">
