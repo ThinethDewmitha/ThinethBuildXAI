@@ -4,7 +4,6 @@ import {
   FileText, Shield, ArrowRight, Layers, HardHat, CheckCircle2,
   Building2, Droplets, Hammer, BarChart3,
 } from 'lucide-react';
-import { SlidingNumber } from '@/components/animate-ui/primitives/texts/sliding-number';
 
 const DELIVERABLES = [
   { icon: Building2, title: 'Foundation Design', detail: 'Type, depth, width, rebar spacing & footing layout' },
@@ -100,7 +99,7 @@ export default function Welcome({ onGetStarted, user }) {
 
             <div className="welcome-stats">
               <div className="welcome-stat">
-                <strong><SlidingNumber number={4} inView /></strong>
+                <strong>4</strong>
                 <span>Site Photos</span>
               </div>
               <div className="welcome-stat">
