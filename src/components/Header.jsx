@@ -46,16 +46,18 @@ export default function Header({
 
   const userBlock = user ? (
     <div className="user-profile">
-      <div className="user-avatar-sm" title={user.name}>
-        {user.name?.charAt(0)?.toUpperCase() || 'U'}
+      <div className="user-profile-identity">
+        <div className="user-avatar-sm" title={user.name}>
+          {user.name?.charAt(0)?.toUpperCase() || 'U'}
+        </div>
+        <span className="user-name">{user.name}</span>
       </div>
-      <span className="user-name">{user.name}</span>
       {user.isAdmin && (
         <button type="button" className="btn-text btn-admin" onClick={onAdminPanel}>Admin</button>
       )}
-      <button type="button" className="btn-text btn-logout" onClick={onLogout}>
-        <LogOut size={14} />
-        Logout
+      <button type="button" className="btn-logout" onClick={onLogout} aria-label="Log out">
+        <LogOut size={15} aria-hidden="true" />
+        <span className="btn-logout-label">Log out</span>
       </button>
     </div>
   ) : (
