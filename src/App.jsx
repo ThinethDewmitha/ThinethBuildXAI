@@ -16,6 +16,7 @@ import { getFirebaseAuth } from './services/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import MapSelector from './components/MapSelector';
 import Welcome from './components/Welcome';
+import ProjectHistory from './components/ProjectHistory';
 
 
 const PHASES = {
@@ -45,6 +46,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showProjects, setShowProjects] = useState(false);
 
   // Load stored API key and restore auth session
   useEffect(() => {
@@ -83,7 +85,33 @@ export default function App() {
   const handleGoHome = () => {
     setShowAuth(false);
     setShowAdmin(false);
+    setShowProjects(false);
     setPhase(PHASES.WELCOME);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleMyProjects = () => {
+    if (!user) {
+      setShowAuth(true);
+      return;
+    }
+    setShowAdmin(false);
+    setShowAuth(false);
+    setShowProjects(true);
+    setPhase(PHASES.WELCOME);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleOpenProject = (project) => {
+    setSpecs(project.specs || null);
+    setAnalysis(project.ai_analysis || null);
+    setEstimate(project.estimate || null);
+    setPhotos({});
+    setSiteLocation(project.specs?.siteLocation || null);
+    setBlueprintImage(null);
+    setError(null);
+    setShowProjects(false);
+    setPhase(PHASES.RESULTS);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -234,6 +262,7 @@ export default function App() {
           onLoginClick={() => setShowAuth(true)}
           onHomeClick={handleGoHome}
           onGetStarted={handleGetStartedNav}
+          onMyProjects={handleMyProjects}
         />
         <AdminDashboard onBack={() => setShowAdmin(false)} />
       </>
@@ -252,6 +281,7 @@ export default function App() {
           onLoginClick={() => setShowAuth(true)}
           onHomeClick={handleGoHome}
           onGetStarted={handleGetStartedNav}
+          onMyProjects={handleMyProjects}
         />
         <Auth onLogin={handleLogin} />
       </>
@@ -268,6 +298,7 @@ export default function App() {
         onLoginClick={() => setShowAuth(true)}
         onHomeClick={handleGoHome}
         onGetStarted={handleGetStartedNav}
+        onMyProjects={handleMyProjects}
       />
 
       <main className="app-main">
@@ -276,8 +307,15 @@ export default function App() {
         <ApiKeyModal onKeySet={handleApiKeySet} />
       )}
 
-      {phase === PHASES.WELCOME && (
+      {phase === PHASES.WELCOME && !showProjects && (
         <Welcome onGetStarted={handleGetStarted} user={user} />
+      )}
+
+      {showProjects && user && (
+        <ProjectHistory
+          onBack={() => setShowProjects(false)}
+          onOpenProject={handleOpenProject}
+        />
       )}
 
       {phase === PHASES.MAP_SELECT && (

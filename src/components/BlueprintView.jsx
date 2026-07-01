@@ -145,6 +145,11 @@ export default function BlueprintView({ analysis, estimate, specs, blueprintImag
             onRequestLogin?.();
             return;
         }
+        if (analysis._isMockFallback) {
+            setSaveState('error');
+            setSaveError('Cannot save demo data. Re-run analysis with a valid Gemini API key.');
+            return;
+        }
         setSaveState('saving');
         setSaveError('');
         try {

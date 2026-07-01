@@ -14,7 +14,7 @@ import fs from 'fs';
 import {
     createUser, getUserByEmail, getUserById, getUserByFirebaseUid, getAllUsers, updateUser, deleteUser,
     createProject, getProjectById, getProjectsByUser, getAllProjects, updateProject, deleteProject,
-    getDashboardStats, hasAdminUser, linkFirebaseAccount
+    getDashboardStats, hasAdminUser, linkFirebaseAccount, getDatabaseMode,
 } from './db.js';
 import { getFirebaseAdmin, verifyFirebaseIdToken } from '../config/firebaseAdmin.js';
 
@@ -136,41 +136,40 @@ function authMiddleware(req, res, next) {
         next();
     };
 
-    getFirebaseAdmin(ROOT_DIR)
-        .then((firebaseAdminInit) => {
+    (async () => {
+        try {
+            const firebaseAdminInit = await getFirebaseAdmin(ROOT_DIR);
             const firebaseApp = firebaseAdminInit?.app || null;
+
             if (firebaseApp) {
-                return verifyFirebaseIdToken(firebaseApp, token)
-                    .then((decoded) => {
-                        let user = getUserByFirebaseUid(decoded.uid);
-                        if (!user && decoded.email) {
-                            const existing = getUserByEmail(decoded.email);
-                            if (existing) {
-                                user = existing.firebase_uid
-                                    ? existing
-                                    : linkFirebaseAccount(existing.id, decoded.uid);
-                            }
+                try {
+                    const decoded = await verifyFirebaseIdToken(firebaseApp, token);
+                    let user = await getUserByFirebaseUid(decoded.uid);
+                    if (!user && decoded.email) {
+                        const existing = await getUserByEmail(decoded.email);
+                        if (existing) {
+                            user = existing.firebase_uid
+                                ? existing
+                                : await linkFirebaseAccount(existing.id, decoded.uid);
                         }
-                        finishWithUser(user);
-                    })
-                    .catch(() => {
-                        try {
-                            const decoded = jwt.verify(token, JWT_SECRET);
-                            finishWithUser(getUserById(decoded.userId));
-                        } catch {
-                            return res.status(401).json({ error: 'Invalid or expired token' });
-                        }
-                    });
+                    }
+                    return finishWithUser(user);
+                } catch {
+                    try {
+                        const decoded = jwt.verify(token, JWT_SECRET);
+                        return finishWithUser(await getUserById(decoded.userId));
+                    } catch {
+                        return res.status(401).json({ error: 'Invalid or expired token' });
+                    }
+                }
             }
 
-            try {
-                const decoded = jwt.verify(token, JWT_SECRET);
-                finishWithUser(getUserById(decoded.userId));
-            } catch {
-                return res.status(401).json({ error: 'Invalid or expired token' });
-            }
-        })
-        .catch(() => res.status(500).json({ error: 'Authentication service unavailable.' }));
+            const decoded = jwt.verify(token, JWT_SECRET);
+            finishWithUser(await getUserById(decoded.userId));
+        } catch {
+            res.status(500).json({ error: 'Authentication service unavailable.' });
+        }
+    })();
 }
 
 function adminMiddleware(req, res, next) {
@@ -199,28 +198,28 @@ function issueAuthToken(user) {
     return jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 }
 
-function upsertUserFromFirebaseProfile(decoded, profile = {}) {
+async function upsertUserFromFirebaseProfile(decoded, profile = {}) {
     const email = (decoded.email || profile.email || '').toLowerCase().trim();
     const firebaseUid = decoded.uid;
     const displayName = profile.name || decoded.name || email.split('@')[0] || 'User';
 
-    let user = getUserByFirebaseUid(firebaseUid);
+    let user = await getUserByFirebaseUid(firebaseUid);
     if (!user && email) {
-        const existing = getUserByEmail(email);
+        const existing = await getUserByEmail(email);
         if (existing) {
             if (existing.firebase_uid && existing.firebase_uid !== firebaseUid) {
                 throw new Error('This email is linked to a different account.');
             }
             user = existing.firebase_uid
                 ? existing
-                : linkFirebaseAccount(existing.id, firebaseUid);
+                : await linkFirebaseAccount(existing.id, firebaseUid);
         }
     }
 
     if (!user) {
         const id = 'user_' + uuidv4().replace(/-/g, '').substring(0, 12);
         const passwordHash = bcrypt.hashSync('firebase:' + uuidv4(), 10);
-        user = createUser({
+        user = await createUser({
             id,
             name: displayName,
             email: email || `${firebaseUid}@firebase.local`,
@@ -231,9 +230,9 @@ function upsertUserFromFirebaseProfile(decoded, profile = {}) {
         });
 
         const isAdminRequest = grantAdminOnRegister(email, profile.adminSecret);
-        if (isAdminRequest && !hasAdminUser()) {
-            updateUser(id, { is_admin: 1 });
-            user = getUserById(id);
+        if (isAdminRequest && !(await hasAdminUser())) {
+            await updateUser(id, { is_admin: 1 });
+            user = await getUserById(id);
         }
     } else {
         const updates = {};
@@ -241,14 +240,14 @@ function upsertUserFromFirebaseProfile(decoded, profile = {}) {
         if (profile.phone) updates.phone = profile.phone;
         if (profile.address) updates.address = profile.address;
         if (Object.keys(updates).length) {
-            user = updateUser(user.id, updates);
+            user = await updateUser(user.id, updates);
         }
     }
 
     return getUserById(user.id);
 }
 
-app.post('/api/auth/register', rateLimit(60_000, 10), (req, res) => {
+app.post('/api/auth/register', rateLimit(60_000, 10), async (req, res) => {
     try {
         const { name, email, phone, address, password, adminSecret } = req.body;
         const normalizedEmail = (email || '').toLowerCase().trim();
@@ -259,24 +258,24 @@ app.post('/api/auth/register', rateLimit(60_000, 10), (req, res) => {
         if (password.length < 8) {
             return res.status(400).json({ error: 'Password must be at least 8 characters.' });
         }
-        if (getUserByEmail(normalizedEmail)) {
+        if (await getUserByEmail(normalizedEmail)) {
             return res.status(409).json({ error: 'An account with this email already exists.' });
         }
 
         const isAdminRequest = grantAdminOnRegister(normalizedEmail, adminSecret);
-        if (isAdminRequest && hasAdminUser()) {
+        if (isAdminRequest && (await hasAdminUser())) {
             return res.status(403).json({ error: 'An admin account already exists.' });
         }
 
         const passwordHash = bcrypt.hashSync(password, 10);
         const id = 'user_' + uuidv4().replace(/-/g, '').substring(0, 12);
-        createUser({ id, name, email: normalizedEmail, phone, address, passwordHash });
+        await createUser({ id, name, email: normalizedEmail, phone, address, passwordHash });
 
         if (isAdminRequest) {
-            updateUser(id, { is_admin: 1 });
+            await updateUser(id, { is_admin: 1 });
         }
 
-        const freshUser = getUserById(id);
+        const freshUser = await getUserById(id);
         const token = issueAuthToken(freshUser);
 
         res.status(201).json({
@@ -289,7 +288,7 @@ app.post('/api/auth/register', rateLimit(60_000, 10), (req, res) => {
     }
 });
 
-app.post('/api/auth/login', rateLimit(60_000, 20), (req, res) => {
+app.post('/api/auth/login', rateLimit(60_000, 20), async (req, res) => {
     try {
         const { email, password } = req.body;
         const normalizedEmail = (email || '').toLowerCase().trim();
@@ -297,7 +296,7 @@ app.post('/api/auth/login', rateLimit(60_000, 20), (req, res) => {
             return res.status(400).json({ error: 'Email and password are required.' });
         }
 
-        const user = getUserByEmail(normalizedEmail);
+        const user = await getUserByEmail(normalizedEmail);
         if (!user || !bcrypt.compareSync(password, user.password_hash)) {
             return res.status(401).json({ error: 'Invalid email or password.' });
         }
@@ -337,7 +336,7 @@ app.post('/api/auth/session', rateLimit(60_000, 20), async (req, res) => {
 
         const decoded = await verifyFirebaseIdToken(firebaseApp, idToken);
 
-        const user = upsertUserFromFirebaseProfile(decoded, { name, phone, address, adminSecret });
+        const user = await upsertUserFromFirebaseProfile(decoded, { name, phone, address, adminSecret });
         if (user.status === 'suspended') {
             return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
         }
@@ -349,21 +348,21 @@ app.post('/api/auth/session', rateLimit(60_000, 20), async (req, res) => {
     }
 });
 
-app.put('/api/users/profile', authMiddleware, (req, res) => {
+app.put('/api/users/profile', authMiddleware, async (req, res) => {
     try {
         const { name, phone, address } = req.body;
-        const updated = updateUser(req.user.id, { name, phone, address });
+        const updated = await updateUser(req.user.id, { name, phone, address });
         res.json({ user: updated });
     } catch {
         res.status(500).json({ error: 'Failed to update profile.' });
     }
 });
 
-app.post('/api/projects', authMiddleware, (req, res) => {
+app.post('/api/projects', authMiddleware, async (req, res) => {
     try {
         const { projectName, specs, aiAnalysis, estimate, photosMeta } = req.body;
         const id = 'proj_' + uuidv4().replace(/-/g, '').substring(0, 12);
-        const project = createProject({
+        const project = await createProject({
             id,
             userId: req.user.id,
             projectName,
@@ -379,17 +378,17 @@ app.post('/api/projects', authMiddleware, (req, res) => {
     }
 });
 
-app.get('/api/projects', authMiddleware, (req, res) => {
+app.get('/api/projects', authMiddleware, async (req, res) => {
     try {
-        res.json({ projects: getProjectsByUser(req.user.id) });
+        res.json({ projects: await getProjectsByUser(req.user.id) });
     } catch {
         res.status(500).json({ error: 'Failed to load projects.' });
     }
 });
 
-app.get('/api/projects/:id', authMiddleware, (req, res) => {
+app.get('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
-        const project = getProjectById(req.params.id);
+        const project = await getProjectById(req.params.id);
         if (!project) return res.status(404).json({ error: 'Project not found.' });
         if (project.user_id !== req.user.id && !req.user.is_admin) {
             return res.status(403).json({ error: 'Access denied.' });
@@ -400,27 +399,27 @@ app.get('/api/projects/:id', authMiddleware, (req, res) => {
     }
 });
 
-app.put('/api/projects/:id', authMiddleware, (req, res) => {
+app.put('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
-        const project = getProjectById(req.params.id);
+        const project = await getProjectById(req.params.id);
         if (!project) return res.status(404).json({ error: 'Project not found.' });
         if (project.user_id !== req.user.id && !req.user.is_admin) {
             return res.status(403).json({ error: 'Access denied.' });
         }
-        res.json({ project: updateProject(req.params.id, req.body) });
+        res.json({ project: await updateProject(req.params.id, req.body) });
     } catch {
         res.status(500).json({ error: 'Failed to update project.' });
     }
 });
 
-app.delete('/api/projects/:id', authMiddleware, (req, res) => {
+app.delete('/api/projects/:id', authMiddleware, async (req, res) => {
     try {
-        const project = getProjectById(req.params.id);
+        const project = await getProjectById(req.params.id);
         if (!project) return res.status(404).json({ error: 'Project not found.' });
         if (project.user_id !== req.user.id && !req.user.is_admin) {
             return res.status(403).json({ error: 'Access denied.' });
         }
-        deleteProject(req.params.id);
+        await deleteProject(req.params.id);
         res.json({ success: true });
     } catch {
         res.status(500).json({ error: 'Failed to delete project.' });
@@ -442,73 +441,73 @@ app.post('/api/projects/upload-photos', authMiddleware, upload.array('photos', 4
     }
 });
 
-app.get('/api/admin/stats', authMiddleware, adminMiddleware, (req, res) => {
+app.get('/api/admin/stats', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        res.json({ stats: getDashboardStats() });
+        res.json({ stats: await getDashboardStats() });
     } catch {
         res.status(500).json({ error: 'Failed to load stats.' });
     }
 });
 
-app.get('/api/admin/users', authMiddleware, adminMiddleware, (req, res) => {
+app.get('/api/admin/users', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const users = getAllUsers();
+        const users = await getAllUsers();
         res.json({ users: users.map(u => ({ ...u, isAdmin: !!u.is_admin })) });
     } catch {
         res.status(500).json({ error: 'Failed to load users.' });
     }
 });
 
-app.get('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
+app.get('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const user = getUserById(req.params.id);
+        const user = await getUserById(req.params.id);
         if (!user) return res.status(404).json({ error: 'User not found.' });
-        res.json({ user: { ...user, isAdmin: !!user.is_admin }, projects: getProjectsByUser(req.params.id) });
+        res.json({ user: { ...user, isAdmin: !!user.is_admin }, projects: await getProjectsByUser(req.params.id) });
     } catch {
         res.status(500).json({ error: 'Failed to load user details.' });
     }
 });
 
-app.put('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
+app.put('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const updated = updateUser(req.params.id, req.body);
+        const updated = await updateUser(req.params.id, req.body);
         res.json({ user: { ...updated, isAdmin: !!updated.is_admin } });
     } catch {
         res.status(500).json({ error: 'Failed to update user.' });
     }
 });
 
-app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, (req, res) => {
+app.delete('/api/admin/users/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         if (req.params.id === req.user.id) {
             return res.status(400).json({ error: 'Cannot delete your own admin account.' });
         }
-        deleteUser(req.params.id);
+        await deleteUser(req.params.id);
         res.json({ success: true });
     } catch {
         res.status(500).json({ error: 'Failed to delete user.' });
     }
 });
 
-app.get('/api/admin/projects', authMiddleware, adminMiddleware, (req, res) => {
+app.get('/api/admin/projects', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        res.json({ projects: getAllProjects() });
+        res.json({ projects: await getAllProjects() });
     } catch {
         res.status(500).json({ error: 'Failed to load projects.' });
     }
 });
 
-app.put('/api/admin/projects/:id', authMiddleware, adminMiddleware, (req, res) => {
+app.put('/api/admin/projects/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        res.json({ project: updateProject(req.params.id, req.body) });
+        res.json({ project: await updateProject(req.params.id, req.body) });
     } catch {
         res.status(500).json({ error: 'Failed to update project.' });
     }
 });
 
-app.delete('/api/admin/projects/:id', authMiddleware, adminMiddleware, (req, res) => {
+app.delete('/api/admin/projects/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        deleteProject(req.params.id);
+        await deleteProject(req.params.id);
         res.json({ success: true });
     } catch {
         res.status(500).json({ error: 'Failed to delete project.' });
@@ -523,6 +522,7 @@ app.get('/api/health', (_req, res) => {
             || process.env.FIREBASE_SERVICE_ACCOUNT_FILE
             || process.env.FIREBASE_PROJECT_ID
         ),
+        database: getDatabaseMode(),
         runtime: process.env.VERCEL ? 'vercel' : 'node',
     });
 });
@@ -535,6 +535,7 @@ if (!process.env.VERCEL) {
         console.log(`   API: http://localhost:${PORT}/api`);
         if (!isProd) console.log(`   CORS: ${corsOrigins.length ? corsOrigins.join(', ') : 'all origins (dev)'}`);
         const firebaseAdminInit = await getFirebaseAdmin(ROOT_DIR);
+        console.log(`   Database: ${getDatabaseMode()}`);
         if (firebaseAdminInit?.app) {
             const fileLabel = firebaseAdminInit.sourceFile?.split(/[/\\]/).pop();
             console.log(`   Firebase Auth: configured${fileLabel ? ` (${fileLabel})` : ''}`);

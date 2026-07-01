@@ -6,6 +6,11 @@ import { MapPin, Search, Loader2, Check, ArrowLeft, Globe, Crosshair } from 'luc
  * Uses OpenStreetMap tiles (free, no API key needed).
  * Reverse geocodes the selected location via Nominatim.
  */
+const NOMINATIM_HEADERS = {
+    'Accept-Language': 'en',
+    'User-Agent': 'BuildXAI/1.0 (https://thineth-buildx-ai.vercel.app; support@buildx.ai)',
+};
+
 export default function MapSelector({ onLocationConfirm, onBack }) {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
@@ -76,7 +81,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
         try {
             const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-                { headers: { 'Accept-Language': 'en' } }
+                { headers: NOMINATIM_HEADERS }
             );
             const data = await res.json();
             const addr = data.address || {};
@@ -109,7 +114,7 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
         try {
             const res = await fetch(
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`,
-                { headers: { 'Accept-Language': 'en' } }
+                { headers: NOMINATIM_HEADERS }
             );
             const results = await res.json();
             if (results.length > 0) {

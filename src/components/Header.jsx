@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Home, Rocket, Settings, User, LogOut, X, Menu,
+  Home, Rocket, Settings, User, LogOut, X, Menu, FolderOpen,
 } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
@@ -16,6 +16,7 @@ export default function Header({
   onLoginClick,
   onHomeClick,
   onGetStarted,
+  onMyProjects,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -76,6 +77,12 @@ export default function Header({
         <Rocket size={18} className="nav-drawer-icon" />
         <span>Get Started</span>
       </button>
+      {user && (
+        <button type="button" className="nav-drawer-link" onClick={handleNav(onMyProjects)}>
+          <FolderOpen size={18} className="nav-drawer-icon" />
+          <span>My Projects</span>
+        </button>
+      )}
       {user?.isAdmin && (
         <button type="button" className="nav-drawer-link" onClick={handleNav(onAdminPanel)}>
           <Settings size={18} className="nav-drawer-icon" />
@@ -125,6 +132,11 @@ export default function Header({
 
           <nav className="header-nav-desktop" aria-label="Main navigation">
             <button type="button" className="header-nav-link" onClick={onHomeClick}>Home</button>
+            {user && (
+              <button type="button" className="header-nav-link" onClick={onMyProjects}>
+                My Projects
+              </button>
+            )}
             <button type="button" className="header-nav-link header-nav-link--cta" onClick={onGetStarted}>
               Get Started
             </button>

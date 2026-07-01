@@ -90,7 +90,7 @@ npx vercel login
 npx vercel --prod
 ```
 
-**Note:** On Vercel, SQLite and uploaded photos use serverless `/tmp` storage (ephemeral across cold starts). For durable production data, plan a hosted database (e.g. Turso, Neon) later.
+**Note:** For durable production data, set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` from [Turso](https://turso.tech) (free tier). Without Turso, SQLite uses serverless `/tmp` (ephemeral across cold starts).
 
 ### Other hosts (split frontend + backend)
 

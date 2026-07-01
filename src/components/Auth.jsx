@@ -147,6 +147,7 @@ export default function Auth({ onLogin }) {
     adminSecret: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', color: '' });
 
@@ -197,6 +198,7 @@ export default function Auth({ onLogin }) {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (field === 'password') setPasswordStrength(checkPasswordStrength(value));
     if (error) setError('');
+    if (success) setSuccess('');
   };
 
   const handleSubmit = async (e) => {
@@ -266,6 +268,7 @@ export default function Auth({ onLogin }) {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setError('');
+    setSuccess('');
   };
 
   const handleForgotPassword = async () => {
@@ -279,10 +282,10 @@ export default function Auth({ onLogin }) {
     }
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       await resetPassword(formData.email);
-      setError('');
-      alert(`Password reset email sent to ${formData.email.trim()}. Check your inbox (and spam folder).`);
+      setSuccess(`Password reset email sent to ${formData.email.trim()}. Check your inbox and spam folder.`);
     } catch (err) {
       setError(mapFirebaseAuthError(err));
     } finally {
@@ -487,6 +490,7 @@ export default function Auth({ onLogin }) {
               </div>
             )}
 
+            {success && <div className="auth-success" role="status">{success}</div>}
             {error && <div className="auth-error">{error}</div>}
 
             <button type="submit" className="auth-submit" disabled={loading}>
