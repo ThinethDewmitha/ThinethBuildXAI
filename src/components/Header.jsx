@@ -9,8 +9,6 @@ function MenuIcon({ open }) {
 }
 
 export default function Header({
-  apiKey,
-  groqApiKey,
   user,
   onLogout,
   onAdminPanel,
@@ -38,22 +36,6 @@ export default function Header({
     closeMenu();
     fn?.();
   };
-
-  const aiReady = Boolean(apiKey);
-  const dualAi = Boolean(apiKey && groqApiKey);
-  const apiStatusLabel = !apiKey ? 'No Key' : dualAi ? 'Gemini + Groq' : 'Gemini';
-  const apiStatusTitle = !apiKey
-    ? 'No API key set'
-    : dualAi
-      ? 'Dual AI: Gemini vision + Groq merge'
-      : 'Gemini connected — add Groq for dual-AI';
-
-  const apiStatus = (
-    <div className="api-status" title={apiStatusTitle}>
-      <div className={`api-status-dot ${aiReady ? 'connected' : ''} ${dualAi ? 'connected-dual' : ''}`} />
-      <span className="api-status-label">{apiStatusLabel}</span>
-    </div>
-  );
 
   const userBlock = user ? (
     <div className="user-profile">
@@ -123,7 +105,6 @@ export default function Header({
             >
               <MenuIcon open={menuOpen} />
             </button>
-            <div className={`api-status-dot api-status-dot--mobile ${apiKey ? 'connected' : ''}`} title={apiKey ? 'AI Ready' : 'No API key'} />
           </div>
 
           <button type="button" className="header-brand" onClick={onHomeClick} aria-label="Go to home">
@@ -155,7 +136,6 @@ export default function Header({
           <div className="header-actions header-actions-desktop">
             <div className="header-actions-primary">
               <ThemeToggle />
-              {apiStatus}
             </div>
             <div className="header-actions-secondary">
               {userBlock}
@@ -198,7 +178,6 @@ export default function Header({
         <div className="nav-drawer-footer">
           <div className="nav-drawer-meta">
             <ThemeToggle />
-            {apiStatus}
           </div>
           {user && (
             <button type="button" className="btn btn-ghost nav-drawer-logout" onClick={handleNav(onLogout)}>

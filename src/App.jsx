@@ -273,8 +273,6 @@ export default function App() {
     return (
       <>
         <Header
-          apiKey={apiKey}
-          groqApiKey={groqApiKey}
           user={user}
           onLogout={handleLogout}
           onAdminPanel={() => setShowAdmin(true)}
@@ -293,8 +291,6 @@ export default function App() {
     return (
       <>
         <Header
-          apiKey={apiKey}
-          groqApiKey={groqApiKey}
           user={user}
           onLogout={handleLogout}
           onAdminPanel={() => setShowAdmin(true)}
@@ -311,8 +307,6 @@ export default function App() {
   return (
     <>
       <Header
-        apiKey={apiKey}
-        groqApiKey={groqApiKey}
         user={user}
         onLogout={handleLogout}
         onAdminPanel={() => setShowAdmin(true)}
