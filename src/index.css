@@ -2563,7 +2563,7 @@ h3 { font-size: 1.25rem; }
 
 .photo-slot {
   position: relative;
-  min-height: 220px;
+  min-height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2597,8 +2597,133 @@ h3 { font-size: 1.25rem; }
 }
 
 .slot-empty { text-align: center; padding: 16px; }
-.slot-icon { font-size: 2rem; margin-bottom: 8px; }
-.slot-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+.slot-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+
+.photo-sketch {
+  position: relative;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto 10px;
+  padding: 8px 10px 6px;
+  border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  color: var(--accent);
+}
+
+.photo-sketch-caption {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.photo-sketch svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.photo-sketch-sky { fill: currentColor; opacity: 0.08; }
+.photo-sketch-line { stroke: currentColor; stroke-width: 1; }
+.photo-sketch-line--muted { opacity: 0.35; }
+.photo-sketch-plot {
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  fill: currentColor;
+  fill-opacity: 0.06;
+}
+.photo-sketch-building {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: currentColor;
+  fill-opacity: 0.18;
+}
+.photo-sketch-roof {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: currentColor;
+  fill-opacity: 0.22;
+}
+.photo-sketch-door {
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: currentColor;
+  fill-opacity: 0.3;
+}
+.photo-sketch-ground-face {
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: currentColor;
+  fill-opacity: 0.1;
+}
+.photo-sketch-neighbor {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: currentColor;
+  fill-opacity: 0.14;
+}
+.photo-sketch-tree {
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: currentColor;
+  fill-opacity: 0.12;
+}
+.photo-sketch-foliage {
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: currentColor;
+  fill-opacity: 0.2;
+}
+.photo-sketch-road {
+  stroke: currentColor;
+  stroke-width: 1;
+  fill: currentColor;
+  fill-opacity: 0.08;
+}
+.photo-sketch-frame {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: currentColor;
+  fill-opacity: 0.05;
+}
+.photo-sketch-texture {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  fill: none;
+  opacity: 0.55;
+}
+.photo-sketch-scale {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  fill: currentColor;
+  fill-opacity: 0.12;
+}
+.photo-sketch-scale-text {
+  fill: currentColor;
+  font-size: 8px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.photo-sketch-camera { fill: currentColor; opacity: 0.75; }
+.photo-sketch-sight {
+  stroke: currentColor;
+  stroke-width: 0.75;
+  stroke-dasharray: 3 3;
+  opacity: 0.35;
+}
+.photo-sketch-label {
+  fill: currentColor;
+  font-size: 7px;
+  font-weight: 600;
+  opacity: 0.55;
+  letter-spacing: 0.02em;
+}
 .slot-guide { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px; }
 .slot-tips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin-bottom: 10px; }
 
@@ -3091,7 +3216,7 @@ h3 { font-size: 1.25rem; }
   .map-actions .btn { width: 100%; }
 
   .upload-grid { grid-template-columns: 1fr; }
-  .photo-slot { min-height: 180px; }
+  .photo-slot { min-height: 280px; }
   .photo-slot .slot-overlay { opacity: 1; background: var(--overlay); }
   .guide-tips-grid { grid-template-columns: 1fr 1fr; }
 

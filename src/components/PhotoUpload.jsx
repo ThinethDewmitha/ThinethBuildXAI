@@ -3,6 +3,7 @@ import {
   Home, ArrowLeft, ArrowRight, Sprout, Camera, X, Check, XCircle,
   Trash2, RefreshCw, Image, Lightbulb, CheckCircle2,
 } from 'lucide-react';
+import PhotoSketchDiagram from './PhotoSketchDiagram';
 
 const PHOTO_SLOTS = [
   {
@@ -166,6 +167,7 @@ export default function PhotoUpload({ onPhotosUpdate, photos = {} }) {
               <div className="slot-empty">
                 <div className="slot-icon"><slot.Icon size={24} /></div>
                 <div className="slot-label">{slot.label}</div>
+                <PhotoSketchDiagram slotId={slot.id} />
                 <div className="slot-guide">{slot.guide}</div>
                 <div className="slot-tips">
                   {slot.tips.map((tip, i) => (
