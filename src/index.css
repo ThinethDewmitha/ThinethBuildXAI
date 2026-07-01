@@ -2887,6 +2887,23 @@ h3 { font-size: 1.25rem; }
 .map-header { text-align: center; margin-bottom: 28px; }
 .map-header h2 { margin-bottom: 8px; }
 .map-header p { color: var(--text-secondary); font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+
+.map-region-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.map-region-hint strong { color: var(--text-primary); }
+
 .map-search-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 .map-search-input-wrap {
   position: relative;

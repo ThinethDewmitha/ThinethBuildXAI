@@ -13,6 +13,58 @@ const NOMINATIM_HEADERS = {
 
 const SUGGESTION_MIN_CHARS = 2;
 const SUGGESTION_DEBOUNCE_MS = 400;
+const FALLBACK_MAP_VIEW = { center: [20.5937, 78.9629], zoom: 5 };
+
+function zoomForCountryCode(code) {
+    const cc = (code || '').toUpperCase();
+    const large = new Set(['US', 'CA', 'RU', 'CN', 'BR', 'AU', 'IN', 'AR', 'KZ', 'DZ', 'CD']);
+    const small = new Set(['SG', 'MV', 'MT', 'BH', 'LU', 'MC', 'AD', 'SM', 'VA', 'LK', 'CY']);
+    if (small.has(cc)) return 8;
+    if (large.has(cc)) return 5;
+    return 6;
+}
+
+async function detectConnectionRegion() {
+    const providers = [
+        async () => {
+            const res = await fetch('https://ipwho.is/');
+            if (!res.ok) throw new Error('ipwho unavailable');
+            const data = await res.json();
+            if (!data.success) throw new Error('ipwho failed');
+            return {
+                lat: Number(data.latitude),
+                lng: Number(data.longitude),
+                country: data.country,
+                countryCode: data.country_code,
+                city: data.city,
+            };
+        },
+        async () => {
+            const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            if (!res.ok) throw new Error('geojs unavailable');
+            const data = await res.json();
+            return {
+                lat: Number(data.latitude),
+                lng: Number(data.longitude),
+                country: data.country,
+                countryCode: data.country_code,
+                city: data.city,
+            };
+        },
+    ];
+
+    for (const load of providers) {
+        try {
+            const region = await load();
+            if (Number.isFinite(region.lat) && Number.isFinite(region.lng)) {
+                return region;
+            }
+        } catch {
+            // try next provider
+        }
+    }
+    return null;
+}
 
 function suggestionPrimaryLabel(item) {
     const addr = item.address || {};
@@ -42,6 +94,8 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
     const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
     const [gpsLoading, setGpsLoading] = useState(false);
     const [gpsError, setGpsError] = useState('');
+    const [connectionRegion, setConnectionRegion] = useState(null);
+    const [regionDetecting, setRegionDetecting] = useState(true);
 
     useEffect(() => {
         if (!mapContainerRef.current || mapRef.current) return;
@@ -52,10 +106,9 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
             return;
         }
 
-        // Initialize map centered on a default location (India center)
         const map = L.map(mapContainerRef.current, {
-            center: [20.5937, 78.9629],
-            zoom: 5,
+            center: [20, 0],
+            zoom: 2,
             zoomControl: true,
         });
 
@@ -64,7 +117,6 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
             maxZoom: 19,
         }).addTo(map);
 
-        // Click handler
         map.on('click', async (e) => {
             const { lat, lng } = e.latlng;
             placeMarker(map, lat, lng);
@@ -73,7 +125,28 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
 
         mapRef.current = map;
 
+        let cancelled = false;
+        setRegionDetecting(true);
+        detectConnectionRegion()
+            .then((region) => {
+                if (cancelled || !mapRef.current) return;
+                if (region) {
+                    mapRef.current.flyTo(
+                        [region.lat, region.lng],
+                        zoomForCountryCode(region.countryCode),
+                        { animate: true, duration: 1.2 },
+                    );
+                    setConnectionRegion(region);
+                } else {
+                    mapRef.current.setView(FALLBACK_MAP_VIEW.center, FALLBACK_MAP_VIEW.zoom);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setRegionDetecting(false);
+            });
+
         return () => {
+            cancelled = true;
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
@@ -143,13 +216,16 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
         setActiveSuggestionIndex(-1);
     };
 
-    const fetchSuggestions = useCallback(async (query) => {
+    const fetchSuggestions = useCallback(async (query, countryCode) => {
         if (searchAbortRef.current) searchAbortRef.current.abort();
         searchAbortRef.current = new AbortController();
         setSuggestionsLoading(true);
+        const countryFilter = countryCode
+            ? `&countrycodes=${encodeURIComponent(String(countryCode).toLowerCase())}`
+            : '';
         try {
             const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1${countryFilter}`,
                 { headers: NOMINATIM_HEADERS, signal: searchAbortRef.current.signal },
             );
             const results = await res.json();
@@ -175,13 +251,13 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
 
         if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         searchDebounceRef.current = setTimeout(() => {
-            fetchSuggestions(query);
+            fetchSuggestions(query, connectionRegion?.countryCode);
         }, SUGGESTION_DEBOUNCE_MS);
 
         return () => {
             if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
         };
-    }, [searchQuery, fetchSuggestions]);
+    }, [searchQuery, fetchSuggestions, connectionRegion?.countryCode]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -231,8 +307,11 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
 
         setSearching(true);
         try {
+            const countryFilter = connectionRegion?.countryCode
+                ? `&countrycodes=${encodeURIComponent(String(connectionRegion.countryCode).toLowerCase())}`
+                : '';
             const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1`,
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&addressdetails=1${countryFilter}`,
                 { headers: NOMINATIM_HEADERS },
             );
             const results = await res.json();
@@ -293,13 +372,31 @@ export default function MapSelector({ onLocationConfirm, onBack }) {
                 <p>Click on the map, search for an address, or use <strong>My GPS</strong> to mark your construction site. This helps us give accurate soil, climate, and regional recommendations.</p>
             </div>
 
+            {(regionDetecting || connectionRegion) && (
+                <p className="map-region-hint" role="status">
+                    {regionDetecting ? (
+                        <><Loader2 size={14} className="spin" /> Detecting your country from connection…</>
+                    ) : (
+                        <>
+                            <Globe size={14} />
+                            Map centered on <strong>{connectionRegion.country}</strong>
+                            {connectionRegion.city ? ` · near ${connectionRegion.city}` : ''}
+                        </>
+                    )}
+                </p>
+            )}
+
             {/* Search Bar */}
             <form className="map-search-bar" onSubmit={handleSearch}>
                 <div className="map-search-input-wrap" ref={searchWrapRef}>
                     <input
                         type="text"
                         className="form-input"
-                        placeholder="Search a location (e.g., Chennai, India or an address)"
+                        placeholder={
+                            connectionRegion
+                                ? `Search in ${connectionRegion.country} (city, town, or address)`
+                                : 'Search a location (e.g., Chennai, India or an address)'
+                        }
                         value={searchQuery}
                         onChange={(e) => {
                             setSearchQuery(e.target.value);
