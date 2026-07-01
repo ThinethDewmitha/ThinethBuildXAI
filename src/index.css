@@ -2342,9 +2342,16 @@ body.app-chrome-active .header {
 }
 
 .project-history-container {
-  max-width: 920px;
+  width: 100%;
+  max-width: min(1320px, calc(100vw - 48px));
   margin: 0 auto;
-  padding: 40px 24px 60px;
+  padding: 40px 32px 60px;
+}
+
+@media (min-width: 1400px) {
+  .project-history-container {
+    max-width: min(1440px, calc(100vw - 64px));
+  }
 }
 
 .project-history-header {
@@ -2352,6 +2359,19 @@ body.app-chrome-active .header {
   flex-direction: column;
   gap: 20px;
   margin-bottom: 28px;
+}
+
+@media (min-width: 768px) {
+  .project-history-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .project-history-header .btn-secondary {
+    flex-shrink: 0;
+  }
 }
 
 .project-history-header h2 { margin: 8px 0; }
@@ -2376,7 +2396,8 @@ body.app-chrome-active .header {
 
 .project-history-empty {
   text-align: center;
-  padding: 48px 32px;
+  padding: 56px 48px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2391,6 +2412,14 @@ body.app-chrome-active .header {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .project-history-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
 }
 
 .project-history-card {
@@ -2422,6 +2451,11 @@ body.app-chrome-active .header {
 }
 
 @media (max-width: 640px) {
+  .project-history-container {
+    max-width: 100%;
+    padding: 32px 16px 48px;
+  }
+
   .project-history-card { flex-direction: column; align-items: stretch; }
   .project-history-actions { width: 100%; }
   .project-history-actions .btn-primary { flex: 1; }

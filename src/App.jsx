@@ -80,7 +80,14 @@ export default function App() {
     if (!auth) return undefined;
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) return;
+      if (!firebaseUser) {
+        if (getStoredToken()) {
+          localStorage.removeItem('buildx_token');
+          localStorage.removeItem('buildx_user');
+          setUser(null);
+        }
+        return;
+      }
       try {
         const idToken = await firebaseUser.getIdToken();
         const data = await syncFirebaseSession(idToken);

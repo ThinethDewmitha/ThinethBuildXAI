@@ -28,7 +28,12 @@ export default function ProjectHistory({ onBack, onOpenProject }) {
       const data = await getMyProjects();
       setProjects(data.projects || []);
     } catch (err) {
-      setError(err.message || 'Failed to load projects.');
+      const msg = err.message || 'Failed to load projects.';
+      setError(
+        msg.includes('session expired') || msg.includes('Invalid or expired token')
+          ? 'Your session expired. Please log out and sign in again.'
+          : msg,
+      );
     } finally {
       setLoading(false);
     }

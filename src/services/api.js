@@ -2,25 +2,31 @@
  * BuildX AI – Frontend API Client
  * Communicates with the Express backend for auth, users, and projects.
  */
-import { firebaseSignOut } from './firebase';
+import { firebaseSignOut, getFirebaseAuth } from './firebase';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
-function getToken() {
+async function getFreshAuthToken(forceRefresh = false) {
+    const auth = getFirebaseAuth();
+    if (auth?.currentUser) {
+        const token = await auth.currentUser.getIdToken(forceRefresh);
+        localStorage.setItem('buildx_token', token);
+        return token;
+    }
     return localStorage.getItem('buildx_token');
 }
 
-function authHeaders() {
-    const token = getToken();
+async function authHeaders(forceRefresh = false) {
+    const token = await getFreshAuthToken(forceRefresh);
     return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function request(endpoint, options = {}) {
+async function request(endpoint, options = {}, retried = false) {
     const url = `${API_BASE}${endpoint}`;
     const config = {
         headers: {
             'Content-Type': 'application/json',
-            ...authHeaders(),
+            ...(await authHeaders(retried)),
             ...options.headers,
         },
         ...options,
@@ -43,12 +49,22 @@ async function request(endpoint, options = {}) {
         }
     }
 
+    if (res.status === 401 && !retried && getFirebaseAuth()?.currentUser) {
+        return request(endpoint, options, true);
+    }
+
     if (!res.ok) {
+        if (res.status === 401) {
+            localStorage.removeItem('buildx_token');
+            localStorage.removeItem('buildx_user');
+        }
         const fallback = res.status === 503
             ? 'Firebase Admin is not configured on the server. Add firebase-adminsdk-*.json to the project root and restart.'
             : res.status === 404
                 ? 'API route not found. Restart the backend with npm run dev.'
-                : `Request failed (${res.status}). Ensure the backend is running.`;
+                : res.status === 401
+                    ? 'Your session expired. Please sign in again.'
+                    : `Request failed (${res.status}). Ensure the backend is running.`;
         throw new Error(data?.error || fallback);
     }
 
